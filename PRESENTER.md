@@ -31,7 +31,7 @@ Have `steps/step3_owner.py` open in an editor, scrolled to the `# NEW` block.
 | 9:30 | **A:** `python run.py 4 --chaos` | "Six turns, then it stops by itself." |
 | 11:00 | Show `interrupt(proposal)` | "Fix 3: money moves only when a human says yes." |
 | 11:30 | **A:** `python run.py 5`, type `approve` | "The graph paused, saved its state, and resumed when I answered." |
-| 13:00 | **B:** `diff steps/step2_broken.py steps/step5_approval.py \| head -40` | "Three fixes. About 25 lines. All in code, none in the prompt." |
+| 13:00 | **B:** `diff steps/step2_broken.py steps/step5_approval.py \| head -40` | "Three fixes: three small functions. All in code, none in the prompt." |
 | 14:00 | Closing | "Agents can start on their own. Code decides what they're allowed to do. A human decides when money moves." |
 
 ## If something goes wrong
