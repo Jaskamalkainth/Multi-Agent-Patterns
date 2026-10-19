@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "sku": "SPRX-BLK-09",
+      "name": "Sparx black running shoe",
+      "price": 849,
+      "store": "demo-store-a"
+    },
+    {
+      "sku": "CMPS-BLK-41",
+      "name": "Campus black runner",
+      "price": 1349,
+      "store": "demo-store-b"
+    },
+    {
+      "sku": "ASIA-BLK-22",
+      "name": "Asian black sports shoe",
+      "price": 1099,
+      "store": "demo-store-c"
+    }
+  ]
+}
