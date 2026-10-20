@@ -109,36 +109,3 @@ graph TD;
 	classDef first fill-opacity:0
 	classDef last fill:#bfb6fc
 ```
-
-## Fix 3 · Human approval
-
-```mermaid
----
-config:
-  flowchart:
-    curve: linear
----
-graph TD;
-	__start__([<p>__start__</p>]):::first
-	watcher(watcher)
-	deal(deal)
-	budget(budget)
-	checkout(checkout)
-	escalate(escalate)
-	__end__([<p>__end__</p>]):::last
-	__start__ --> watcher;
-	budget -.-> checkout;
-	budget -.-> deal;
-	budget -.-> escalate;
-	deal -.-> budget;
-	deal -.-> checkout;
-	deal -.-> escalate;
-	watcher --> deal;
-	checkout --> __end__;
-	escalate --> __end__;
-	budget -.-> budget;
-	deal -.-> deal;
-	classDef default fill:#f2f0ff,line-height:1.2
-	classDef first fill-opacity:0
-	classDef last fill:#bfb6fc
-```

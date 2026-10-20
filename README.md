@@ -2,7 +2,9 @@
 
 A hands-on lab for the **AgenticAI Summit 2026** session *Agent Flow & Multi-Agent Systems*.
 
-Agents usually start when a person types a prompt or submits a form. In this lab they start **on their own**, when something changes in the world. Then we break them, and fix them with three guardrails written in code.
+Agents usually start when a person types a prompt or submits a form. In this lab they start **on their own**, when something changes in the world. Then we break them, and fix them with two guardrails written in code.
+
+This lab follows Rahul Verma's CrewAI + n8n demos, which cover agent roles, typed handoffs and a human approval gate. This lab covers what happens **before** a human is involved: agents that start by themselves, fight over ownership, and loop.
 
 | Step | File | What happens |
 |---|---|---|
@@ -10,7 +12,6 @@ Agents usually start when a person types a prompt or submits a form. In this lab
 | 2 | `steps/step2_broken.py` | **Break it.** Two agents both think the purchase is theirs. They argue, add 2 items to the cart, and only the framework's recursion limit stops them. |
 | 3 | `steps/step3_owner.py` | **Fix 1: one owner per task.** First claim wins. Code rejects any other claim. |
 | 4 | `steps/step4_budget.py` | **Fix 2: budget and stop.** Hard limits on turns and tokens. When hit, stop and hand over to a human. |
-| 5 | `steps/step5_approval.py` | **Fix 3: human approval.** The graph pauses before checkout and resumes when a human answers. |
 
 Built with [LangGraph](https://github.com/langchain-ai/langgraph). All orders are simulated. Nothing is bought.
 
@@ -38,7 +39,6 @@ python run.py 2                   # 2. two agents, no rules: watch it go wrong
 python run.py 3                   # 3. fix 1: one owner per task
 python run.py 3 --chaos           #    ...but a looping owner still runs until the framework kills it
 python run.py 4 --chaos           # 4. fix 2: the budget stops the loop
-python run.py 5                   # 5. fix 3: you approve or deny the purchase
 ```
 
 Options:
@@ -46,9 +46,8 @@ Options:
 | Flag | Meaning |
 |---|---|
 | `--auto-drop N` | The price drops by itself after N seconds. Good for a single screen. |
-| `--watch` | Steps 2–5: wait for a real price change instead of firing at once. |
+| `--watch` | Steps 2–4: wait for a real price change instead of firing at once. |
 | `--chaos` | The owner agent keeps re-checking prices forever. Shows why step 4 is needed. |
-| `--yes` | Step 5: approve without asking (for testing). |
 
 Environment variables:
 
@@ -79,10 +78,9 @@ Each step is a full, runnable file. The new lines are marked `# NEW`. To see exa
 ```bash
 diff steps/step2_broken.py steps/step3_owner.py    # ownership rule
 diff steps/step3_owner.py  steps/step4_budget.py   # budget + escalate
-diff steps/step4_budget.py steps/step5_approval.py # interrupt() + checkpointer
 ```
 
-The three fixes in short:
+The two fixes in short:
 
 ```python
 # Fix 1: one owner per task (step 3)
@@ -93,9 +91,6 @@ def claim(state, name):
 # Fix 2: budget and stop (step 4)
 def within_budget(state):
     return state.get("turn", 0) < MAX_TURNS and state.get("tokens", 0) < MAX_TOKENS
-
-# Fix 3: human approval (step 5)
-answer = interrupt(proposal)   # pauses the graph and saves state; resumes with Command(resume=...)
 ```
 
 The models never enforce these rules. **Code does.** A model can still say "I'll buy it". The code decides whether it can.
@@ -133,7 +128,7 @@ python run.py 2
 
 1. In step 4, change `MAX_TURNS` to 3. What happens to a normal (non-chaos) run?
 2. In step 3, change who gets the event first (`g.add_edge("watcher", "deal")`). Who owns the task now?
-3. In step 5, add a rule: auto-approve under ₹500, ask a human above it.
+3. In step 4, pause for human approval before checkout with LangGraph's `interrupt()` (the same idea as Rahul's n8n approval gate, in code). Hint: compile with a checkpointer.
 4. Add a third agent, "Reviews", that must agree before `buy` is allowed.
 
 ---
@@ -145,7 +140,7 @@ run.py                 runs a step and prints the summary
 lab/feed.py            the fake store feed and the watcher
 lab/llm.py             one ask() function: offline script or a real model
 lab/core.py            graph state, watcher node, terminal output
-steps/step1..5_*.py    the five steps
+steps/step1..4_*.py    the four steps
 tools/drop_price.py    change a price from a second terminal
 tools/draw_graphs.py   export each graph as Mermaid
 data/price_feed.json   the "world"
