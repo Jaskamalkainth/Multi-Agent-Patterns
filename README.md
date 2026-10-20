@@ -4,13 +4,15 @@ A hands-on lab for the **AgenticAI Summit 2026** session *Agent Flow & Multi-Age
 
 Agents usually start when a person types a prompt or submits a form. In this lab they start **on their own**, when something changes in the world. Then we break them, and fix them with three guardrails written in code.
 
+This lab follows Rahul Verma's CrewAI + n8n demos, which cover agent roles, typed handoffs and a human approval gate in n8n. This lab focuses on what those flows don't show: agents that **start by themselves**, **fight over ownership**, and **loop**. Step 5 repeats the approval gate in code, so you can see the same safeguard outside n8n.
+
 | Step | File | What happens |
 |---|---|---|
 | 1 | `steps/step1_trigger.py` | **Self-starting.** A price drop in a store feed starts the agents. Nobody types anything. |
 | 2 | `steps/step2_broken.py` | **Break it.** Two agents both think the purchase is theirs. They argue, add 2 items to the cart, and only the framework's recursion limit stops them. |
 | 3 | `steps/step3_owner.py` | **Fix 1: one owner per task.** First claim wins. Code rejects any other claim. |
 | 4 | `steps/step4_budget.py` | **Fix 2: budget and stop.** Hard limits on turns and tokens. When hit, stop and hand over to a human. |
-| 5 | `steps/step5_approval.py` | **Fix 3: human approval.** The graph pauses before checkout and resumes when a human answers. |
+| 5 | `steps/step5_approval.py` | **Fix 3: human approval.** The same safeguard as Rahul's n8n approval gate, in code: the graph pauses before checkout and resumes when a human answers. |
 
 Built with [LangGraph](https://github.com/langchain-ai/langgraph). All orders are simulated. Nothing is bought.
 
