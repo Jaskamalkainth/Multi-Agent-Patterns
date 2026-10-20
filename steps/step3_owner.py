@@ -20,7 +20,11 @@ ACTIONS = ["claim", "stand_down", "buy", "recheck"]
 
 # NEW ─────────────────────────────────────────────────────────────
 def claim(state: State, name: str):
-    """First claim wins. Code enforces it, whatever the model says."""
+    """First claim wins. Code enforces it, whatever the model says.
+
+    Anthropic's research agents duplicated each other's work until each one
+    had a clearly owned task.
+    """
     owner = state.get("owner")
     return name if owner in (None, name) else None
 # ─────────────────────────────────────────────────────────────────

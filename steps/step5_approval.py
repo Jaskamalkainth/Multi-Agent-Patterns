@@ -55,6 +55,8 @@ def checkout(state: State):
     item = state["event"]
     proposal = {"item": item["name"], "price": item["price"], "store": item["store"],
                 "quantity": 1, "proposed_by": state["owner"]}
+    # Same gate as Rahul's n8n flow. Replit's agent deleted a production
+    # database in 2025 because nothing like this stood in its way.
     answer = interrupt(proposal)          # pause here; state is saved; resume with a human answer
     if answer != "approve":
         say("checkout", {"action": "cancelled", "say": "Human said no. Nothing ordered."})

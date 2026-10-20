@@ -3,6 +3,8 @@
 Two agents react to the same event. Both were told purchases are their job.
 No ownership rule, no budget, no approval. They argue and both add to cart.
 LangGraph's recursion limit is the only thing that stops them.
+In the wild: in 2011 two Amazon pricing bots kept reacting to each other
+until a textbook was listed at $23.7 million.
 """
 from langgraph.graph import START, StateGraph
 

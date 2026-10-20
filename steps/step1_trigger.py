@@ -1,6 +1,7 @@
 """Step 1 · Self-starting.
 
 Nobody types a prompt. A price change in the world starts the graph.
+In production: AWS DevOps Agent starts investigating the moment an alert fires.
 watcher → evaluator → done
 """
 from langgraph.graph import END, START, StateGraph

@@ -140,6 +140,24 @@ python run.py 2
 
 ---
 
+## Where this shows up in production
+
+| Step | Real-world version |
+|---|---|
+| 1 · Self-starting | **AWS DevOps Agent** starts investigating the moment an alert fires (generally available March 2026). JPMorgan Chase plans agents that run for hours without human intervention. |
+| 2 · Two agents, no rules | In 2011 two **Amazon pricing bots** reacted to each other until a textbook was listed at $23.7 million. |
+| 3 · One owner | **Anthropic's** research sub-agents duplicated each other's work until each got a clearly owned task. |
+| 4 · Budget and stop | **Anthropic** scales effort to the task and added stop rules after agents searched endlessly. **Knight Capital** lost $440M in 45 minutes with no kill switch (2012). **LinkedIn's** Hiring Assistant hands off to a human when stuck. |
+| 5 · Approval | In 2025 **Replit's** AI agent deleted a production database during a code freeze. |
+
+Teams of agents in production today include Walmart (Sparky, Marty), Amazon (Insight Agents for sellers), LinkedIn (Hiring Assistant, on LangGraph) and Uber (developer agents, on LangGraph). Figures are as each company reports them.
+
+Further reading:
+- [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (Anthropic)
+- [AWS DevOps Agent general availability](https://aws.amazon.com/fr/blogs/mt/announcing-general-availability-of-aws-devops-agent/) (AWS)
+- [Insight Agents: an LLM-based multi-agent system for data](https://www.amazon.science/publications/insight-agents-an-llm-based-multi-agent-system-for-data) (Amazon Science)
+- [Walmart's super agent framework](https://www.supermarketnews.com/grocery-technology/walmart-unveils-super-agent-framework-for-ai-tools) (Supermarket News)
+
 ## Project layout
 
 ```

@@ -19,6 +19,8 @@ ROLE = {
 ACTIONS = ["claim", "stand_down", "buy", "recheck"]
 
 # NEW ─────────────────────────────────────────────────────────────
+# Anthropic scales effort to the task (a simple question gets 1 agent and
+# 3-10 tool calls) and added stop rules after agents searched endlessly.
 MAX_TURNS = 6
 MAX_TOKENS = 3_000
 
@@ -60,6 +62,7 @@ def checkout(state: State):
 
 # NEW ─────────────────────────────────────────────────────────────
 def escalate(state: State):
+    # Like LinkedIn's Hiring Assistant: when stuck, hand off to a human.
     say("guard", {"action": "stopped", "say": f"Budget hit: {state['turn']} turns, ~{state['tokens']:,} tokens. "
                                                "Stopping and asking a human."})
     return {"outcome": "Stopped by budget. Escalated to a human."}

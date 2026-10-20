@@ -23,15 +23,15 @@ Have `steps/step3_owner.py` open in an editor, scrolled to the `# NEW` block.
 |---|---|---|
 | 0:00 | **A:** `python run.py 1` (it waits) | "Rahul's flow starts when a person fills a form. This one has no form. The agents are watching a store feed." |
 | 0:30 | **B:** `python tools/drop_price.py` | "A price just changed in the world." |
-| 1:00 | Point at the summary: **Human inputs 0** | "Nobody asked. The work started because something changed." |
+| 1:00 | Point at the summary: **Human inputs 0** | "Nobody asked. The work started because something changed. AWS ships exactly this: an agent that starts when an alert fires." |
 | 2:00 | **A:** `python run.py 2` | "Now two agents react to the same event. Both were told purchases are their job." |
 | 3:00 | Point at the cart: **2 items**, tokens climbing | "They argue. Both add to cart. Nobody decides." |
-| 4:00 | Point at **KILLED** | "The only thing that stopped them was the framework's recursion limit. That's luck, not design." |
-| 5:00 | Show the `claim()` function in the editor (5 lines) | "Fix 1: one owner per task. First claim wins. Code enforces it, not the prompt." |
+| 4:00 | Point at **KILLED** | "The only thing that stopped them was the framework's recursion limit. That's luck, not design. Two Amazon pricing bots did this in 2011 and listed a book at $23.7 million." |
+| 5:00 | Show the `claim()` function in the editor (5 lines) | "Fix 1: one owner per task. First claim wins. Code enforces it, not the prompt. Anthropic's agents duplicated work until each one owned a clear task." |
 | 6:00 | **A:** `python run.py 3` | "Same agents, same prompts. One stands down. One item. But notice: nobody approved the purchase." |
 | 7:00 | **A:** `python run.py 3 --chaos` | "And what if the owner keeps re-checking prices forever?" Let it run a few seconds. |
 | 8:00 | Show `within_budget()` + `escalate()` | "Fix 2: a budget on turns and tokens. When it's hit, stop and hand over to a human." |
-| 9:00 | **A:** `python run.py 4 --chaos` | "Six turns, then it stops by itself and escalates." |
+| 9:00 | **A:** `python run.py 4 --chaos` | "Six turns, then it stops by itself and escalates, the way LinkedIn's agents hand off to a human when stuck." |
 | 10:00 | Show `interrupt(proposal)`, then **A:** `python run.py 5`, type `approve` | "Fix 3 you already saw in Rahul's n8n flow: a human approves before money moves. Here it is in code, one line. The graph pauses, saves its state, and resumes when I answer." |
 | 11:30 | **B:** `diff steps/step2_broken.py steps/step5_approval.py \| head -40` | "Three fixes, three small functions. All in code, none in the prompt." |
 | 12:30 | Closing | "Agents can start on their own. Code decides who owns the work and when to stop. A human decides when money moves." |
