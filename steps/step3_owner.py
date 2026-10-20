@@ -51,7 +51,7 @@ def checkout(state: State):
     item = state["event"]
     order = {"sku": item["sku"], "by": state["owner"]}
     say("checkout", {"action": "ordered", "say": f"Simulated order: 1 × {item['name']} at ₹{item['price']}."})
-    note("Bought with no human approval. (Rahul's approval gate covers this.)", "yellow")
+    note("No human was asked before buying.", "yellow")
     return {"cart": [order], "outcome": "Bought 1 item. Nobody approved it."}
 
 
