@@ -1,91 +1,71 @@
-"""Run one step of the lab.
+"""Run the agent team.
 
-  python run.py 1                 wait for a price drop (edit the feed or run tools/drop_price.py)
-  python run.py 1 --auto-drop 3   the price drops by itself after 3 seconds (one-screen demo)
-  python run.py 2                 broken: two agents, no rules
-  python run.py 3                 fix 1: one owner per task
-  python run.py 4 --chaos         fix 2: budget stops a runaway loop
-  python run.py 5                 fix 3: human approval before checkout
-  python run.py 5 --chaos         all three fixes together
+Act 1 · watch it work (all guardrails on)
+  python run.py                          the price drops at once
+  python run.py --watch                  wait for a real price change (python run.py --drop in a 2nd terminal)
+  python run.py --auto-drop 3            the price drops by itself after 3 seconds
 
-Steps 2-5 fire the event immediately. Add --watch to wait for a real price change instead.
+Act 3 · remove a guardrail
+  python run.py --no-owner               both agents buy: 2 items in the cart
+  python run.py --no-budget --chaos      the owner re-checks forever until the framework kills it
+  python run.py --chaos                  same loop, budget on: stops at 6 turns and escalates
+  python run.py --no-approval            it buys and nobody was asked
+  python run.py --unsafe                 all three off
+
+Act 4 · crash, resume, rewind
+  python run.py --crash-after evaluator  the process dies mid-run
+  python run.py --resume                 carry on from the last checkpoint; finished agents don't re-run
+  python run.py --history                list the last run's checkpoints
+  python run.py --rewind N               replay from checkpoint N with all guardrails on (or name some to remove)
+
+Settings come from .env (copy .env.example). Real environment variables win.
+Each run writes console.log, e2e.log, diff.log and summary.json to output/<timestamp>_<label>/.
 """
+import sys
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # ₹ in help and output, even when piped on Windows
+
 import argparse
-import importlib
 
-from langgraph.errors import GraphRecursionError
-from langgraph.types import Command
-from rich.prompt import Prompt
-
-from lab import feed, llm
-from lab.core import console, header, note, say, summary
-
-STEPS = {1: "step1_trigger", 2: "step2_broken", 3: "step3_owner", 4: "step4_budget", 5: "step5_approval"}
-RECURSION_LIMIT = 24   # LangGraph's own safety net (default is 25)
-
-
-def get_event(args):
-    feed.reset_feed()
-    goal = feed.GOAL
-    note(f"Saved goal: {goal['item']} under ₹{goal['max_price']:,}. Mode: {llm.MODE}.")
-    if args.watch:
-        how = f"auto drop in {args.auto_drop}s" if args.auto_drop is not None else \
-              "edit data/price_feed.json or run: python tools/drop_price.py"
-        console.print(f"[magenta]{'Watcher':>9}[/] [bold]WATCHING[/]     store feed… nobody is typing ({how})")
-        return feed.watch(auto_drop=args.auto_drop)
-    before = feed.read_feed()
-    feed.drop_price()
-    return feed.find_event(before, feed.read_feed())
+from lab import runner
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("step", type=int, choices=STEPS)
-    p.add_argument("--chaos", action="store_true", help="owner agent keeps re-checking forever")
+    p.add_argument("--no-owner", action="store_true", help="remove guardrail 1: one owner per task")
+    p.add_argument("--no-budget", action="store_true", help="remove guardrail 2: budget and stop")
+    p.add_argument("--no-approval", action="store_true", help="remove guardrail 3: human approval")
+    p.add_argument("--unsafe", action="store_true", help="remove all three guardrails")
+    p.add_argument("--chaos", action="store_true", help="the owner agent keeps re-checking prices forever")
     p.add_argument("--watch", action="store_true", help="wait for a price change in the feed")
     p.add_argument("--auto-drop", type=float, default=None, help="seconds until the price drops by itself")
-    p.add_argument("--yes", action="store_true", help="step 5: approve without asking (for testing)")
-    args = p.parse_args()
-    if args.step == 1 or args.auto_drop is not None:
-        args.watch = True
+    p.add_argument("--yes", action="store_true", help="approve without asking (for testing)")
+    p.add_argument("--deny", action="store_true", help="deny without asking (for testing)")
+    p.add_argument("--crash-after", choices=["watcher", "scout", "evaluator", "deal", "budget"],
+                   help="kill the process right after this agent")
+    p.add_argument("--resume", action="store_true", help="carry on the last run from its last checkpoint")
+    p.add_argument("--history", action="store_true", help="list the last run's checkpoints")
+    p.add_argument("--rewind", type=int, metavar="N", help="replay the last run from checkpoint N")
+    p.add_argument("--drop", action="store_true", help="drop the Sparx shoe to ₹849 in the feed, then exit")
+    p.add_argument("--reset-feed", action="store_true", help="put every price back above budget, then exit")
+    a = p.parse_args()
+    answer = "approve" if a.yes else "deny" if a.deny else None
 
-    mod = importlib.import_module(f"steps.{STEPS[args.step]}")
-    header(args.step, mod.TITLE, mod.SUBTITLE + ("  [red](--chaos)[/]" if args.chaos else ""))
-    graph = mod.build(chaos=args.chaos)
-
-    event = get_event(args)
-    config = {"recursion_limit": RECURSION_LIMIT, "configurable": {"thread_id": f"step{args.step}"}}
-    human_inputs = 0
-
-    state, killed = stream(graph, {"event": event}, config)
-    if killed:
-        say("guard", {"action": "killed", "say": f"LangGraph recursion limit ({RECURSION_LIMIT}) hit. "
-                                                  "The agents never decided."})
-        summary(state, human_inputs, ended="[red]Killed by the framework. Nobody decided.[/]")
-        return
-
-    # Step 5: the graph paused at interrupt() and is waiting for a human.
-    while getattr(mod, "NEEDS_CHECKPOINT", False) and graph.get_state(config).next:
-        proposal = graph.get_state(config).tasks[0].interrupts[0].value
-        console.print()
-        console.print(f"[bold white]{'You':>9}[/] [bold]APPROVAL[/]     Buy {proposal['quantity']} × {proposal['item']} "
-                      f"for ₹{proposal['price']} from {proposal['store']}? (proposed by {proposal['proposed_by']} agent)")
-        answer = "approve" if args.yes else Prompt.ask(f"{'':>9} Approve or deny", choices=["approve", "deny"],
-                                                       default="approve")
-        human_inputs += 1
-        state, _ = stream(graph, Command(resume=answer), config, state)
-
-    summary(state, human_inputs)
-
-
-def stream(graph, inp, config, state=None):
-    """Run the graph, keeping the latest state. Returns (state, killed_by_recursion_limit)."""
-    try:
-        for state in graph.stream(inp, config, stream_mode="values"):
-            pass
-        return state, False
-    except GraphRecursionError:
-        return state, True
+    if a.drop or a.reset_feed:
+        from lab import feed
+        feed.reset_feed() if a.reset_feed else feed.drop_price()
+        print("Feed reset: all prices above budget." if a.reset_feed else "Sparx black running shoe → ₹849")
+    elif a.history:
+        runner.history()
+    elif a.resume:
+        runner.resume(answer=answer)
+    elif a.rewind is not None:
+        runner.rewind(a.rewind, owner=not (a.no_owner or a.unsafe), budget=not (a.no_budget or a.unsafe),
+                      approval=not (a.no_approval or a.unsafe), chaos=a.chaos, answer=answer)
+    else:
+        runner.run(owner=not (a.no_owner or a.unsafe), budget=not (a.no_budget or a.unsafe),
+                   approval=not (a.no_approval or a.unsafe), chaos=a.chaos, watch=a.watch, auto_drop=a.auto_drop,
+                   answer=answer, crash_after=a.crash_after)
 
 
 if __name__ == "__main__":

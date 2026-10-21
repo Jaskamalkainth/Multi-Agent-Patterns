@@ -1,7 +1,8 @@
 """A tiny fake store feed.
 
-The "world" is one JSON file. A watcher polls it. When a price drops under the
-saved goal's budget, that is an event, and the agents start. No prompt, no form.
+The "world" is one JSON file, output/price_feed.json, created on first use. A watcher polls it.
+When a price drops under the saved goal's budget, that is an event, and the agents start.
+No prompt, no form. Change it from a second terminal with: python run.py --drop
 """
 import json
 import os
@@ -10,26 +11,28 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-FEED = ROOT / "data" / "price_feed.json"
+WORLD = json.loads((ROOT / "data" / "shoes.json").read_text(encoding="utf-8"))   # the same stores as Part 2
+FEED = Path(os.getenv("LAB_OUTPUT") or ROOT / "output") / "price_feed.json"   # changes during the demo, so it lives with the run logs
 
 # The user saved this goal earlier. Nobody is typing during the demo.
-GOAL = {"item": "black running shoes", "max_price": 1000}
+GOAL = {"item": "black running shoes", "max_price": WORLD["goal"]["max_price"]}
 
-DEFAULT_ITEMS = [
-    {"sku": "SPRX-BLK-09", "name": "Sparx black running shoe", "price": 1199, "store": "demo-store-a"},
-    {"sku": "CMPS-BLK-41", "name": "Campus black runner", "price": 1349, "store": "demo-store-b"},
-    {"sku": "ASIA-BLK-22", "name": "Asian black sports shoe", "price": 1099, "store": "demo-store-c"},
-]
+# One listing per store, all above budget until the price drops.
+DEFAULT_ITEMS = [{"sku": x["id"], "name": x["name"], "price": x["price"], "store": x["store"]}
+                 for x in WORLD["listings"] if x["id"] in WORLD["guardrails_lab"]]
+EVENT = WORLD["event"]
 
 
 def read_feed(retries=20):
+    if not FEED.exists():
+        reset_feed()
     # Retry: an editor or another process may be halfway through saving the file.
     for _ in range(retries):
         try:
             return json.loads(FEED.read_text())["items"]
         except (json.JSONDecodeError, KeyError, FileNotFoundError):
             time.sleep(0.05)
-    raise RuntimeError(f"Could not read {FEED}. Is it valid JSON? Run: python tools/drop_price.py --reset")
+    raise RuntimeError(f"Could not read {FEED}. Is it valid JSON? Run: python run.py --reset-feed")
 
 
 def write_feed(items):
@@ -37,6 +40,12 @@ def write_feed(items):
     FEED.parent.mkdir(parents=True, exist_ok=True)
     tmp = FEED.with_suffix(".tmp")
     tmp.write_text(json.dumps({"items": items}, indent=2) + "\n")
+    for _ in range(20):   # Windows: a reader (the lab page's feed watcher) can hold the file for a moment
+        try:
+            os.replace(tmp, FEED)
+            return
+        except PermissionError:
+            time.sleep(0.05)
     os.replace(tmp, FEED)
 
 
@@ -45,7 +54,7 @@ def reset_feed():
     write_feed([dict(i) for i in DEFAULT_ITEMS])
 
 
-def drop_price(sku="SPRX-BLK-09", price=849):
+def drop_price(sku=EVENT["id"], price=EVENT["new_price"]):
     items = read_feed()
     for item in items:
         if item["sku"] == sku:
@@ -63,7 +72,7 @@ def find_event(before, after):
     return None
 
 
-def watch(poll=0.5, auto_drop=None, on_tick=None):
+def watch(poll=0.5, auto_drop=None):
     """Block until an event happens. Returns the event dict.
 
     auto_drop: seconds after which the price drops by itself (single-screen demo).
@@ -78,5 +87,3 @@ def watch(poll=0.5, auto_drop=None, on_tick=None):
         if event:
             return event
         baseline = current
-        if on_tick:
-            on_tick()

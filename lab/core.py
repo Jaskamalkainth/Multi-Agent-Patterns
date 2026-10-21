@@ -10,7 +10,7 @@ from rich.table import Table
 
 from lab import llm
 
-console = Console(highlight=False)
+console = Console(highlight=False, record=True)   # record: saved to output/<run>/console.log
 DELAY = float(os.getenv("LAB_DELAY", "0.7"))  # pause between lines so the room can read
 
 
@@ -18,14 +18,16 @@ class State(TypedDict, total=False):
     event: dict                                # what happened in the world
     log: Annotated[list, operator.add]         # every agent message
     cart: Annotated[list, operator.add]        # items added to cart
-    owner: Optional[str]                       # step 3+: who owns the purchase
+    offers: Annotated[list, operator.add]      # one offer per scout
+    best: Optional[dict]                       # the evaluator's pick
+    owner: Optional[str]                       # guardrail 1: who owns the purchase
     last: dict                                 # last message, used for routing
-    turn: int                                  # agent turns so far
+    turn: int                                  # buyer turns so far
     tokens: int                                # tokens used so far
     outcome: str                               # how the run ended
 
 
-COLORS = {"watcher": "magenta", "evaluator": "cyan", "deal": "dodger_blue1",
+COLORS = {"watcher": "magenta", "scout": "orange1", "evaluator": "cyan", "deal": "dodger_blue1",
           "budget": "yellow", "checkout": "green", "guard": "red", "human": "bold white"}
 
 
@@ -42,9 +44,9 @@ def note(text, style="dim"):
     time.sleep(DELAY * 0.6)
 
 
-def header(step, title, subtitle):
+def header(label, title, subtitle):
     console.print()
-    console.print(Panel(f"[bold]{title}[/]\n[dim]{subtitle}[/]", title=f"Step {step}", title_align="left",
+    console.print(Panel(f"[bold]{title}[/]\n[dim]{subtitle}[/]", title=label, title_align="left",
                         border_style="cyan", padding=(0, 1)))
 
 

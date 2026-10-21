@@ -1,0 +1,3 @@
+# Optional: the CrewAI version of Demo 1 (crews/). Heavier: it also installs chromadb, grpc and more.
+-r requirements.txt
+crewai==1.15.28
