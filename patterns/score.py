@@ -7,18 +7,31 @@ Demo stores, four checks:            Live sites, four checks (a search page can'
   genuine seller       not a reseller                        not a search-index fallback, fresh
                                         cheapest match       no cheaper listing passes the other three
 In the demo stores the cheapest-match check isn't needed: the traps are built into the data.
+The names come from the goal: another query gets its own ("grey running shoe", no size check if it names none).
 """
 from patterns import world
+
+
+def names():
+    """The checks for the current goal, in order."""
+    g, demo = world.GOAL, world.SOURCE.get("kind") == "demo"
+    return ([world.item_text(plural=False)] + ([f"size {g['size']} in stock"] if g.get("size") else [])
+            + [f"under ₹{g['max_price']:,}", "genuine seller" if demo else "verified evidence"]
+            + ([] if demo else ["cheapest match"]))
+
+
+def _kind(x, g):
+    return (g.get("type") is None or x["type"] == g["type"]) and (g.get("color") is None or x["color"] == g["color"])
 
 
 def checks(lid):
     x, g = world.LISTINGS[lid], world.GOAL
     seller = world.SELLERS[x["seller"]]
-    c = {"black running shoe": (x["type"] == g["type"] and x["color"] == g["color"],
-                                f"{x['color']} {x['type']}" if world.SOURCE["kind"] == "demo"
-                                else ("“black” and “running” in the evidence" if x["type"] == "running" and x["color"] == "black"
-                                      else f"evidence says: {'running' if x['type'] == 'running' else 'not running'}, "
-                                           f"{'black' if x['color'] == 'black' else 'not black'}"))}
+    words = [(k, g[k]) for k in ("color", "type") if g.get(k)]
+    c = {world.item_text(plural=False): (_kind(x, g), f"{x['color']} {x['type']}" if world.SOURCE["kind"] == "demo"
+                                         else (" and ".join(f"“{w}”" for _, w in words) + " in the evidence" if _kind(x, g)
+                                               else "evidence says: " + ", ".join(w if x[k] == w else f"not {w}"
+                                                                                  for k, w in words)))}
     if g.get("size"):
         c[f"size {g['size']} in stock"] = (g["size"] in (x["sizes"] or []),
                                            "sizes " + ", ".join(map(str, x["sizes"])) if x["sizes"] else "size unverified")
@@ -35,8 +48,7 @@ def checks(lid):
 
 def _passes(lid):
     x, g = world.LISTINGS[lid], world.GOAL
-    return (x["type"] == g["type"] and x["color"] == g["color"] and world.price(lid) <= g["max_price"]
-            and world.SELLERS[x["seller"]]["verified"])
+    return _kind(x, g) and world.price(lid) <= g["max_price"] and world.SELLERS[x["seller"]]["verified"]
 
 
 def grade(lid):

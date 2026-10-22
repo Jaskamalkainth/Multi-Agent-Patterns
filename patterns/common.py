@@ -32,6 +32,16 @@ def cancel():
     _resume.set()
 
 
+def cancelled():
+    return _cancel.is_set()
+
+
+def rearm():
+    """A new launch: forget the last Stop. Not in begin(), so a Stop pressed while a run is still starting
+    (CrewAI loading, a live collection) holds."""
+    _cancel.clear()
+
+
 def pause(on):
     """Pause a running level at its next event (the page's ❚❚ Pause); resume where it stopped."""
     _resume.clear() if on else _resume.set()
@@ -111,15 +121,14 @@ def _open_log(level, framework):
 def begin(level, title, human_steps, framework="langgraph"):
     """Reset the counters for a new run."""
     llm.reset()
-    _cancel.clear()
     _resume.set()
     stats.clear()
     stats.update(level=level, agents=0, messages=0, tokens=0, llm_calls=0, human_steps=human_steps, t0=time.time())
-    from patterns import world
+    from patterns import score, world
     with _lock:
         _open_log(level, framework)
     emit("run_start", level=level, framework=framework, title=title, mode=llm.MODE, model=llm.MODEL, human_steps=human_steps,
-         query=world.QUERY, listings=world.view(), stores=list(world.STORES), world=dict(world.SOURCE))
+         query=world.QUERY, checks=score.names(), listings=world.view(), stores=list(world.STORES), world=dict(world.SOURCE))
 
 
 # Shorthands for the events the UI draws. Each one is a single emit().

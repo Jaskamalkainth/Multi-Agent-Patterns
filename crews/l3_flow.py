@@ -55,7 +55,8 @@ class PriceWatch(Flow[Watch]):
                     f"₹{e['old_price']} → ₹{e['new_price']}. Does it matter? action: trigger or ignore.",
             Decision.model_json_schema(),
             lambda: {"action": "trigger", "reason": f"{e['name']} is now ₹{e['new_price']:,}, under budget. "
-                                                    "Waking the team."})
+                                                    "Waking the team."} if world.fits(e["id"]) else
+                    {"action": "ignore", "reason": f"{e['name']} doesn't meet the saved query."})
         c.counted("lead", tokens)
         d = Decision.model_validate(answer)
         c.say("lead", d.reason)

@@ -8,6 +8,6 @@ from pathlib import Path
 
 os.environ["LAB_LLM"] = "offline"
 os.environ["LAB_DELAY"] = "0"
-os.environ["LAB_OUTPUT"] = tempfile.mkdtemp(prefix="how-agents-talk-tests-")
+os.environ["LAB_OUTPUT"] = tempfile.mkdtemp(prefix="multi-agent-patterns-tests-")
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))

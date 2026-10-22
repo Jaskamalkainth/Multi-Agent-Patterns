@@ -27,6 +27,11 @@ class EventLog:
             self.events.append(ev)
             self.cond.notify_all()
 
+    def forget(self):
+        """A page that connects from now on replays nothing: the last run is no longer on screen anywhere."""
+        with self.cond:
+            self.start = len(self.events)
+
 
 class Handler(BaseHTTPRequestHandler):
     """Serves `page` at /, the event log at /events. Subclasses add routes in get() and post()."""

@@ -139,7 +139,23 @@ def test_stop_works_while_paused():
     finally:
         common.pause(False)
         common.set_pace(0)
+        common.rearm()
         stop()
+
+
+def test_stop_before_the_first_level_starts_holds():
+    from patterns import server
+    common.set_pace(0.05)
+    n = len(server.SESSION.log.events)
+    try:
+        server.SESSION.launch([0, 1], "langgraph", None, 0.05, 0)
+        server.SESSION.stop()                               # pressed straight away: nothing is bought
+        server.SESSION.thread.join(10)
+    finally:
+        common.set_pace(0)
+        common.rearm()
+    kinds = [e["type"] for e in server.SESSION.log.events[n:]]
+    assert kinds[0] == "launched" and "stopped" in kinds and "run_end" not in kinds
 
 
 def test_every_model_call_reaches_the_page_and_the_run_log(monkeypatch, tmp_path):
@@ -157,3 +173,40 @@ def test_every_model_call_reaches_the_page_and_the_run_log(monkeypatch, tmp_path
     assert lines[0]["type"] == "run_start" and lines[-1]["type"] == "run_end"
     assert [x["type"] for x in lines] == [e["type"] for e in seen]
     assert lines[-1]["t"] >= lines[0]["t"] == 0
+
+
+def test_a_query_becomes_the_goal():
+    assert world.parse(world.DEMO["goal"]["query"]) == world.DEMO["goal"]
+    assert all(world.parse(q)["max_price"] for q in world.EXAMPLES)       # every example on the page runs
+    assert world.parse("Grey running shoes under 800") == {"query": "Grey running shoes under 800", "color": "grey",
+                                                           "type": "running", "size": None, "max_price": 800}
+    with pytest.raises(ValueError, match="budget"):
+        world.parse("black shoes")
+    with pytest.raises(ValueError, match="recording"):
+        world.use("recording", query="Grey running shoes under 800")
+
+
+@pytest.fixture
+def grey():
+    world.use("demo", query="Grey running shoes, size 9, under ₹800")
+    yield
+    world.use("demo")
+
+
+def test_another_query_runs_through_every_level(grey):
+    r = {n: patterns.run(n, auto_drop=0.05) for n in patterns.LEVELS}
+    assert [r[n]["grade"]["pick"] for n in range(3)] == ["b3"] * 3          # the only grey running shoe
+    assert list(r[0]["grade"]["checks"]) == ["grey running shoe", "size 9 in stock", "under ₹800", "genuine seller"]
+    assert r[3]["grade"]["pick"] == "b3" and r[3]["grade"]["price"] == 629   # the feed drops a shoe that fits this query
+    world.use("demo", query="White running shoes under ₹2,000")
+    assert world.EVENT == {} and patterns.run(3, auto_drop=0.05)["grade"] is None   # nothing fits: nothing to watch
+
+
+def test_reset_all_goes_back_to_the_default_page():
+    from patterns import server
+    world.use("demo", query="Grey running shoes under ₹800")
+    server.SESSION.results = {("demo", "langgraph", 0): {}}
+    server.SESSION.reset()
+    assert server.SESSION.results == {} and world.QUERY == world.DEMO["goal"]["query"]
+    log = server.SESSION.log
+    assert log.events[log.start:] == [] and log.events[-1]["type"] == "reset"   # a reloaded page replays nothing

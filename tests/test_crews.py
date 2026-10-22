@@ -48,3 +48,13 @@ def test_a_failing_model_falls_back_to_the_script(monkeypatch):
     finally:
         llm.configure("offline")
     assert r["grade"]["pick"] == "a2"
+
+
+def test_crewai_follows_another_query():
+    from patterns import world
+    world.use("demo", query="Running shoes size 10 under 1200")
+    try:
+        picks = [crews.run(n, auto_drop=0.05)["grade"]["pick"] for n in range(3)]
+    finally:
+        world.use("demo")
+    assert picks == ["c3", "c2", "c2"]     # L0 searches "running" and drops size 10 and the seller check

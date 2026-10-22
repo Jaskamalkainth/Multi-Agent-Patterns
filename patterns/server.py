@@ -26,10 +26,13 @@ class Session:
     def __init__(self):
         self.log = web.EventLog()
         self.results = {}                  # (world, framework, level) → last result, for the scoreboard
+        self.query = world.QUERY
         self.thread = None
         common.listen(self.emit)
 
     def emit(self, ev):
+        if ev["type"] == "run_start" and ev["query"] != self.query:   # a new query starts a new scoreboard
+            self.results, self.query = {}, ev["query"]
         if ev["type"] == "run_end":
             self.results[ev["world"]["kind"], ev["framework"], ev["level"]] = ev
         self.log.add(ev, new_run=ev["type"] == "run_start")
@@ -37,7 +40,7 @@ class Session:
     def running(self):
         return self.thread is not None and self.thread.is_alive()
 
-    def launch(self, levels, framework, brain, pace, auto_drop, kind="demo", headless=None, fresh=False):
+    def launch(self, levels, framework, brain, pace, auto_drop, kind="demo", headless=None, fresh=False, query=None):
         if self.running():
             raise RuntimeError("A run is in progress. Stop it first.")
         if framework == "crewai" and not crews.available():
@@ -48,18 +51,29 @@ class Session:
             if llm.BRAINS[brain][0] == "claude" and not claude_cli.available():
                 raise RuntimeError("The claude CLI was not found. Install Claude Code, or set CLAUDE_BIN.")
             llm.configure(*llm.BRAINS[brain])
+        if query:
+            world.parse(query)             # a query without a budget fails here, before the run starts
         common.set_pace(pace)
-        self.thread = threading.Thread(target=self._run, args=(levels, FRAMEWORKS[framework], auto_drop, kind, headless, fresh),
-                                       daemon=True)
+        common.rearm()
+        self.emit({"type": "launched"})      # the page can offer Stop before the first level starts
+        self.thread = threading.Thread(target=self._run, args=(levels, FRAMEWORKS[framework], auto_drop, kind, headless, fresh,
+                                                               query), daemon=True)
         self.thread.start()
 
-    def _run(self, levels, run, auto_drop, kind, headless, fresh):
+    def _run(self, levels, run, auto_drop, kind, headless, fresh, query):
         try:      # live: collect (or reuse a collection under 15 minutes old) before the first level
-            world.use(kind, progress=lambda text: self.emit({"type": "collect", "text": text}), headless=headless, fresh=fresh)
+            world.use(kind, progress=lambda text: self.emit({"type": "collect", "text": text}), headless=headless, fresh=fresh,
+                      query=query, stop=common.cancelled)
+        except live.Stopped:
+            self.emit({"type": "stopped", "level": levels[0]})
+            return
         except Exception as e:
             self.emit({"type": "error", "level": levels[0], "error": f"{type(e).__name__}: {e}"})
             return
         for n in levels:
+            if common.cancelled():           # stopped between levels, or before the first one began
+                self.emit({"type": "stopped", "level": n})
+                return
             try:
                 run(n, auto_drop=auto_drop)
             except common.Cancelled:
@@ -69,6 +83,29 @@ class Session:
                 self.emit({"type": "error", "level": n, "error": f"{type(e).__name__}: {e}"})
                 return
         self.emit({"type": "idle"})
+
+    def clear_live(self):
+        """Forget the live collection and its scoreboard rows (live and recording)."""
+        if self.running():
+            raise RuntimeError("A run is in progress. Stop it first.")
+        live.forget()
+        self.results = {k: v for k, v in self.results.items() if k[0] == "demo"}
+        self._blank("live")
+
+    def reset(self):
+        """Back to the page as it first opens: no results, the default query, the demo stores.
+        The saved live collection stays (clear_live forgets it)."""
+        if self.running():
+            raise RuntimeError("A run is in progress. Stop it first.")
+        self.results = {}
+        world.use("demo")
+        self.query = world.QUERY
+        self._blank("all")
+
+    def _blank(self, what):
+        """Every open page reloads with empty panels; the reset event itself is never replayed."""
+        self.emit({"type": "reset", "what": what})
+        self.log.forget()
 
     def stop(self):
         if self.running():
@@ -122,7 +159,7 @@ class Handler(web.Handler):
     log = SESSION.log
 
     def hello(self):
-        return {"query": world.QUERY, "mode": llm.MODE, "model": llm.MODEL or ("sonnet" if llm.MODE == "claude" else ""),
+        return {"query": world.QUERY, "default_query": world.DEMO["goal"]["query"], "examples": world.EXAMPLES, "mode": llm.MODE, "model": llm.MODEL or ("sonnet" if llm.MODE == "claude" else ""),
                 "results": list(SESSION.results.values()), "running": SESSION.running(), "paused": common.paused(),
                 "crewai": crews.available(), "claude": claude_cli.available(),
                 "live": live.available(), "recording": live.latest() is not None}
@@ -174,7 +211,12 @@ class Handler(web.Handler):
             browser = body.get("browser")
             SESSION.launch(levels, framework, body.get("brain"), min(max(float(body.get("pace", 0.7)), 0), 3),
                            min(max(float(body.get("auto_drop", 8)), 0), 120), kind,
-                           headless=None if browser is None else browser == "hidden", fresh=bool(body.get("fresh")))
+                           headless=None if browser is None else browser == "hidden", fresh=bool(body.get("fresh")),
+                           query=(body.get("query") or "").strip()[:200] or None)
+        elif path == "/clear-live":
+            SESSION.clear_live()
+        elif path == "/reset":
+            SESSION.reset()
         elif path == "/drop":
             world.drop_price()
         elif path == "/stop":

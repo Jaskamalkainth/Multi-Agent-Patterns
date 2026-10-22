@@ -45,7 +45,7 @@ def test_live_reuses_a_fresh_collection_and_collects_a_stale_one(monkeypatch, tm
     sample = json.loads(live.SAMPLE.read_text(encoding="utf-8"))
     calls = []
     monkeypatch.setattr(live, "available", lambda: True)
-    monkeypatch.setattr(live, "collect", lambda budget, **kw: calls.append(budget) or fresh)
+    monkeypatch.setattr(live, "collect", lambda goal, **kw: calls.append(goal["max_price"]) or fresh)
     fresh = {**sample, "observed_at": datetime.now(timezone.utc).isoformat()}
     stale = {**sample, "observed_at": "2026-01-01T00:00:00+00:00"}
     (tmp_path / "latest.json").write_text(json.dumps(stale), encoding="utf-8")        # old: must collect
@@ -56,6 +56,27 @@ def test_live_reuses_a_fresh_collection_and_collects_a_stale_one(monkeypatch, tm
     assert calls == [1000]
     world.use("live", fresh=True)                                                      # the page's "Collect fresh"
     assert calls == [1000, 1000]
+    world.use("live", query="Grey running shoes under ₹800")                           # another query: search again
+    assert calls == [1000, 1000, 800]
+
+
+def test_a_live_search_follows_the_query():
+    goal = world.parse("Grey running shoes, size 9, under ₹800")
+    assert live.search_text(goal) == "grey running shoes under 800"   # size can't be searched or seen: left out
+    ev = {**json.loads(live.SAMPLE.read_text(encoding="utf-8")), "budget": 800, "goal": {"color": "grey", "type": "running", "max_price": 800}}
+    g, listings, *_ = world._from_evidence(ev, recorded=True)
+    assert g["query"] == "Grey running shoes under ₹800" and g["size"] is None
+    assert {x["color"] for x in listings} <= {"grey", "other"}
+
+
+def test_clear_forgets_the_collection_and_its_scores(tmp_path):
+    from patterns import server
+    (tmp_path / "latest.json").write_text(live.SAMPLE.read_text(encoding="utf-8"), encoding="utf-8")
+    (tmp_path / "amazon-latest.png").write_bytes(b"png")
+    server.SESSION.results = {("demo", "langgraph", 0): {}, ("live", "langgraph", 0): {}, ("recording", "crewai", 1): {}}
+    server.SESSION.clear_live()
+    assert list(tmp_path.iterdir()) == [] and list(server.SESSION.results) == [("demo", "langgraph", 0)]
+    assert live.latest() == json.loads(live.SAMPLE.read_text(encoding="utf-8"))   # recording: back to the sample
 
 
 def test_the_evidence_page_shows_what_each_site_returned():

@@ -22,13 +22,13 @@ def build():
     found = lambda: [i for s in world.STORES for i in world.search_store(s, G["type"], G["color"])]   # noqa: E731
     sized = lambda: [i for i in found() if world.in_stock(i, G["size"])]                             # noqa: E731
     cheap = lambda: [i for i in sized() if world.price(i) <= G["max_price"]]                          # noqa: E731
-    checks = ["black running shoes", world.size_text(), f"under ₹{G['max_price']:,}", "the cheapest"]
+    checks = [world.item_text(), world.size_text(), f"under ₹{G['max_price']:,}", "the cheapest"]
     planner = kit.agent("planner", "Planner", "Turn the user's query into checks for the workers.", Plan,
-                        lambda: Plan(checks=checks, note=f"Search running + black, then {world.size_text()}, then under "
+                        lambda: Plan(checks=checks, note=f"Search {world.item_text()}, then {world.size_text()}, then under "
                                                           f"₹{G['max_price']:,}, then the cheapest."))
     workers = {
         "search": (kit.agent("search", "Search", "Find listings of the right type and colour.", Shortlist,
-                             lambda: Shortlist(listing_ids=found(), note=f"{len(found())} black running shoes")),
+                             lambda: Shortlist(listing_ids=found(), note=f"{len(found())} {world.item_text()}")),
                    "Return the IDs of listings matching the type and colour in the plan."),
         "size": (kit.agent("size", "Size", "Keep listings with the user's size in stock.", Shortlist,
                            lambda: Shortlist(listing_ids=sized(), note=f"{len(sized())} in size {G['size']}" if G["size"]

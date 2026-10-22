@@ -7,9 +7,10 @@
   python search.py --brain claude-haiku     real agents: the Claude Code CLI with your saved login
   python search.py --world live             real listings from Amazon.in, Flipkart and Myntra (opens Chrome)
   python search.py --world recording        the last live collection, replayed
+  python search.py --query "Grey running shoes, size 9, under ₹800"     your own query (demo or live)
 
-Query: "Black running shoes, size 9, under ₹1,000", end to end to a simulated order. Same stores, same tools,
-same model every time.
+Query (default): "Black running shoes, size 9, under ₹1,000", end to end to a simulated order. Same stores,
+same tools, same model every time.
 The code is in patterns/ (LangGraph) and crews/ (CrewAI). Settings come from .env (copy .env.example).
 """
 import sys
@@ -79,7 +80,7 @@ def scoreboard(results):
     for r in sorted(results, key=lambda r: (r["level"], r["framework"] != "langgraph")):
         g, s = r["grade"], r["stats"]
         if not g:
-            t.add_row(r["title"], r["framework"], "nothing bought", "—", str(s["agents"]), str(s["llm_calls"]),
+            t.add_row(r["title"], {"langgraph": "LangGraph", "crewai": "CrewAI"}[r["framework"]], "nothing bought", "—", str(s["agents"]), str(s["llm_calls"]),
                       f"{s['tokens']:,}", str(s["human_steps"]), str(s["seconds"]))
             continue
         color = "green" if g["score"] == g["of"] else "yellow" if g["score"] > 1 else "red"
@@ -100,9 +101,14 @@ def main():
                                                            "(default: LAB_LLM / LAB_MODEL from .env)")
     p.add_argument("--world", choices=["demo", "live", "recording"], default="demo",
                    help="demo stores, live sites (collects in Chrome), or the last live recording")
+    p.add_argument("--query", help="your own query, with a colour, a type (running or casual), an optional size "
+                                   "and a budget (demo stores or live sites)")
     a = p.parse_args()
     from patterns import world
-    print(world.use(a.world, progress=lambda text: console.print(f"[dim]  {text}[/]"))["label"])
+    try:
+        print(world.use(a.world, progress=lambda text: console.print(f"[dim]  {text}[/]"), query=a.query)["label"])
+    except ValueError as e:
+        p.error(str(e))
     if a.brain:
         llm.configure(*llm.BRAINS[a.brain])
     if a.fast:

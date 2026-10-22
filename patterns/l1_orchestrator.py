@@ -4,7 +4,7 @@
 
 Communication: hub and spoke. The planner (an LLM) reads the query, chooses the checks and briefs one
 worker per check. Workers never talk to each other and pass on only what their brief asked for.
-It catches "running" and "size 9", which the script missed. But no worker's brief is about the seller,
+It catches the type and the size ("running" and "size 9"), which the script missed. But no worker's brief is about the seller,
 so the cheapest "Sparx" left is a ₹699 one from an unverified reseller.
 """
 from typing import TypedDict
@@ -43,7 +43,7 @@ def planner(state):
     reply = c.think("planner", f"You are a planner agent. Turn the user's query into checks, in order, using only these "
                                f"workers: {SKILLS}. Start with search and end with pick.",
                     {"query": state["query"]}, ["plan"],
-                    offline={"action": "plan", "say": f"Search running + black, then {world.size_text()}, then under "
+                    offline={"action": "plan", "say": f"Search {world.item_text()}, then {world.size_text()}, then under "
                                                       f"₹{world.GOAL['max_price']:,}, then the cheapest.",
                              "tasks": [s for s in PLAN if s != "size" or world.GOAL.get("size")]},
                     fields={"tasks": f"ordered list of workers from {PLAN}"})
@@ -70,7 +70,7 @@ def worker(state):
         ids = [i for s in world.STORES for i in world.search_store(s, g["type"], g["color"])]
         c.tool(skill, "search_store", {"type": g["type"], "color": g["color"]}, f"{len(ids)} listings")
         c.listing(ids, "checked")
-        summary = f"{len(ids)} black running shoes"
+        summary = f"{len(ids)} {world.item_text()}"
     elif skill == "size":
         keep = [i for i in ids if world.in_stock(i, g["size"])]
         if g["size"]:

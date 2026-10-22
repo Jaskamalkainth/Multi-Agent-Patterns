@@ -1,4 +1,4 @@
-# How Agents Talk: coordination patterns in LangGraph and CrewAI
+# Multi-Agent Patterns in LangGraph & CrewAI
 
 A hands-on session on how AI agents coordinate. One shopping query, **"Black running shoes, size 9, under ₹1,000"**,
 runs through four coordination patterns in [LangGraph](https://github.com/langchain-ai/langgraph) and
@@ -42,6 +42,10 @@ The grader checks four things: black running shoe · size 9 in stock · under �
 | L3 | **Event-driven** (a price drop wakes the team) | Sparx running shoe · ₹849 | 4/4 | ₹130 cheaper, no human steps, and it asks before buying |
 
 Each level is more autonomous and spends more tokens. The code is in `patterns/` (LangGraph) and `crews/` (CrewAI).
+
+**Your own query:** the shoe query is the default, but any query with a colour, a type (`running` or `casual`), an
+optional size and a budget works on the demo stores. Type it in the Query box on the page, or
+`python search.py --query "Grey running shoes, size 9, under ₹800"`. The grader builds its checks from your query.
 
 Level 2 in a few lines (`patterns/l2_team.py`):
 

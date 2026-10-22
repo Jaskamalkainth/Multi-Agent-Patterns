@@ -1,7 +1,7 @@
 """Live evidence from Amazon.in, Flipkart and Myntra. A Python port of the CrewAI lab's browser collector
 (demos/marketplace_service/browser_search.cjs): Playwright drives your installed Chrome.
 
-  collect(budget)    search the three sites, read up to 4 results each, open up to 2 product pages each
+  collect(goal)      search the three sites for the goal, read up to 4 results each, open up to 2 product pages each
   latest()           the last collection, if any (output/live/latest.json)
 
 What it does not do: log in, add to cart, or order. What it cannot see on a search page: size, stock, delivery,
@@ -25,7 +25,7 @@ SAMPLE = Path(__file__).resolve().parent.parent / "data" / "live-sample.json"
 SITES = [
     {"name": "Amazon", "host": "amazon.in", "url": "https://www.amazon.in/s?k={q}"},
     {"name": "Flipkart", "host": "flipkart.com", "url": "https://www.flipkart.com/search?q={q}"},
-    {"name": "Myntra", "host": "myntra.com", "url": "https://www.myntra.com/black-running-shoes?sort=price_asc"},
+    {"name": "Myntra", "host": "myntra.com", "url": "https://www.myntra.com/{slug}?sort=price_asc"},
 ]
 FRESH_SECONDS = 15 * 60
 UNVERIFIED = ["size", "stock", "delivery", "returns", "shipping", "checkout_total"]
@@ -92,11 +92,25 @@ def _clean_url(site, url):
     return u.geturl()
 
 
-def collect(budget=1000, headless=None, progress=lambda text: None):
-    """Search the three sites in your Chrome. Returns the evidence dict and saves it to output/live/."""
+def words(goal):
+    """What the store's search box gets: colour, type, "shoes". Size isn't searchable on these pages."""
+    return " ".join(w for w in (goal.get("color"), goal.get("type"), "shoes") if w)
+
+
+def search_text(goal):
+    return f"{words(goal)} under {goal['max_price']}"
+
+
+class Stopped(Exception):
+    """Someone pressed Stop during a collection. Chrome closes; nothing is saved."""
+
+
+def collect(goal, headless=None, progress=lambda text: None, stop=lambda: False):
+    """Search the three sites in your Chrome for the goal (colour, type, budget). Returns the evidence dict and
+    saves it to output/live/. stop() is checked before each site and each product page."""
     from playwright.sync_api import sync_playwright
     headless = os.getenv("MARKETPLACE_BROWSER_HEADLESS", "0") == "1" if headless is None else headless
-    query = f"black running shoes under {budget}"
+    budget, query = goal["max_price"], search_text(goal)
     start, candidates, sources = time.time(), [], []
     OUT.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
@@ -108,8 +122,10 @@ def collect(budget=1000, headless=None, progress=lambda text: None):
         context = browser.new_context(locale="en-IN", viewport={"width": 1400, "height": 900}, user_agent=agent)
         try:
             for site in SITES:
+                if stop():
+                    raise Stopped()
                 name, host = site["name"], site["host"]
-                url = site["url"].format(q=quote(query))
+                url = site["url"].format(q=quote(query), slug=words(goal).replace(" ", "-"))
                 progress(f"Searching {name}…")
                 page = context.new_page()
                 status, items, title, error, observed_at = "NO_EXTRACTABLE_CANDIDATES", [], "", None, now()
@@ -153,6 +169,8 @@ def collect(budget=1000, headless=None, progress=lambda text: None):
                     good.append(x)
                 good = good[:4]
                 for x in [g for g in good if g["observed_price_inr"] <= budget][:2]:   # read the product page
+                    if stop():
+                        raise Stopped()
                     progress(f"{name}: reading a product page…")
                     detail, x["detail_status"] = context.new_page(), "UNAVAILABLE"
                     try:
@@ -182,6 +200,7 @@ def collect(budget=1000, headless=None, progress=lambda text: None):
         finally:
             browser.close()
     evidence = {"mode": "live_browser", "search_provider": "Playwright + system Chrome", "query": query, "budget": budget,
+                "goal": {k: goal.get(k) for k in ("color", "type", "max_price")},
                 "observed_at": now(), "candidates": candidates, "sources": sources, "visible_browser": not headless,
                 "duration_ms": round((time.time() - start) * 1000),
                 "limitations": ["Observed item prices are not verified checkout totals.",
@@ -192,6 +211,13 @@ def collect(budget=1000, headless=None, progress=lambda text: None):
     from lab import trace
     trace.prune(OUT, "20[0-9][0-9]-*.json", 10)   # keep the last 10 collections
     return evidence
+
+
+def forget():
+    """Drop the saved collection (latest.json and the screenshots): the next live run collects again.
+    The timestamped history in output/live/ stays."""
+    for f in [OUT / "latest.json"] + [OUT / f"{s['name'].lower()}-latest.png" for s in SITES]:
+        f.unlink(missing_ok=True)
 
 
 def latest(sample=True):

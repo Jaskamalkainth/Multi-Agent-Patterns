@@ -18,12 +18,10 @@ from patterns import world
 
 TITLE = "Level 2 · Async tasks + guardrail"
 HUMAN_STEPS = 1
-G = world.GOAL
 
 
 def matches(store):
-    return [i for i in world.search_store(store, G["type"], G["color"])
-            if world.in_stock(i, G["size"]) and world.price(i) <= G["max_price"]]
+    return [i for i in world.search_store(store) if world.fits(i)]
 
 
 def key(store):

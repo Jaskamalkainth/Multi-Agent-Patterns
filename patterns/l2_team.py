@@ -43,14 +43,13 @@ def fan_out(state):
 
 
 def scout(inp):
-    store, g = inp["store"], world.GOAL
+    store = inp["store"]
     me = "scout-" + store
     c.msg("lead", me, "task", f"check {store}")
     c.status(me, "active", "searching")
     ids = world.search_store(store)
     c.listing(ids, "checked")
-    ok = [i for i in ids if world.LISTINGS[i]["type"] == g["type"] and world.LISTINGS[i]["color"] == g["color"]
-          and world.in_stock(i, g["size"]) and world.price(i) <= g["max_price"]]
+    ok = [i for i in ids if world.fits(i)]
     c.listing([i for i in ids if i not in ok], "out")
     c.listing(ok, "kept")
     reply = c.think(me, f"You are a scout for {store}. Report which listings match the query.",

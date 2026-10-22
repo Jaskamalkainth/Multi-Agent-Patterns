@@ -11,8 +11,11 @@ Two kinds of world, same shape, so every pattern and both frameworks run unchang
   recording   the last live collection, replayed: for a stage without network. Labelled as recorded.
 
 use(kind) switches the world in place, so modules that imported GOAL or LISTINGS see the new one.
+use(query=...) swaps the shoe query for another one, parsed into the same goal fields. Live sites search for it
+too (colour, type, budget); a recording replays whatever query it was collected for.
 """
 import json
+import re
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -26,22 +29,29 @@ _prices = {}
 _dropped = threading.Event()
 
 
-def use(kind="demo", progress=lambda text: None, headless=None, fresh=False):
+def use(kind="demo", progress=lambda text: None, headless=None, fresh=False, query=None, stop=lambda: False):
     """Switch the world. kind: demo, live (collect if the last collection is over 15 minutes old, or fresh=True)
-    or recording. headless: hide Chrome while collecting (None: MARKETPLACE_BROWSER_HEADLESS, default shown)."""
+    or recording. headless: hide Chrome while collecting (None: MARKETPLACE_BROWSER_HEADLESS, default shown).
+    query: any query parse() understands (None: the default shoe query). Not for a recording.
+    stop: checked during a live collection (live.Stopped when it says so)."""
     global QUERY
+    if query and kind == "recording":
+        raise ValueError("A recording replays the query it was collected for. Use Live sites to search for yours.")
     if kind == "demo":
-        goal, listings, sellers, event, stores = (dict(DEMO["goal"]), DEMO["listings"], DEMO["sellers"], DEMO["event"],
-                                                  sorted({x["store"] for x in DEMO["listings"]}))
+        goal = parse(query) if query else dict(DEMO["goal"])
+        listings, sellers, stores = DEMO["listings"], DEMO["sellers"], sorted({x["store"] for x in DEMO["listings"]})
+        event = DEMO["event"] if goal == DEMO["goal"] else _demo_event(goal)
         source = {"kind": "demo", "label": "Demo stores"}
     else:
         from patterns import live
+        want = parse(query) if query else dict(DEMO["goal"])
         evidence = live.latest(sample=kind == "recording")   # live never reuses the shipped sample
-        if kind == "live" and (fresh or evidence is None or live.age_seconds(evidence) > live.FRESH_SECONDS):
+        if kind == "live" and (fresh or evidence is None or live.age_seconds(evidence) > live.FRESH_SECONDS
+                               or evidence.get("query") != live.search_text(want)):   # another query: search again
             if not live.available():
                 raise RuntimeError("Playwright is not installed: pip install -r requirements-live.txt")
-            progress("Collecting live evidence in Chrome: Amazon, Flipkart, Myntra…")
-            evidence = live.collect(DEMO["goal"]["max_price"], headless=headless, progress=progress)
+            progress(f"Collecting live evidence in Chrome for “{live.search_text(want)}”: Amazon, Flipkart, Myntra…")
+            evidence = live.collect(want, headless=headless, progress=progress, stop=stop)
         if evidence is None:
             raise RuntimeError("No recording yet. Run a live collection first.")
         goal, listings, sellers, event, stores = _from_evidence(evidence, recorded=kind == "recording")
@@ -59,12 +69,51 @@ def use(kind="demo", progress=lambda text: None, headless=None, fresh=False):
     return SOURCE
 
 
+COLOURS = {"black", "white", "grey", "gray", "blue", "navy", "red", "green", "brown", "pink", "yellow", "orange", "beige"}
+TYPES = {"running": "running", "runner": "running", "runners": "running", "casual": "casual", "slip-on": "casual"}
+EXAMPLES = [DEMO["goal"]["query"], "Grey running shoes, size 9, under ₹800", "Running shoes, size 10, under ₹1,200",
+            "Casual shoes under ₹600"]   # the page's dropdown; each one teaches something different
+
+
+def parse(query):
+    """A query → the goal every pattern checks: colour, type, size, budget. A word it doesn't know is no requirement.
+
+    "Black running shoes, size 9, under ₹1,000"  → black, running, size 9, ₹1,000
+    "Grey running shoes under 800"               → grey, running, any size, ₹800
+    """
+    words = re.findall(r"[a-z]+(?:-[a-z]+)?", query.lower())
+    colour = next((w for w in words if w in COLOURS), None)
+    size = re.search(r"size\s*(\d+)", query, re.I)
+    budget = re.search(r"(?:under|below|upto|up to|max|<)\s*(?:₹|rs\.?|inr)?\s*([\d,]+)", query, re.I)
+    if not budget:
+        raise ValueError(f"Say a budget in the query, e.g. “{query.strip()} under ₹1,000”.")
+    return {"query": query.strip(), "color": "grey" if colour == "gray" else colour,
+            "type": next((TYPES[w] for w in words if w in TYPES), None),
+            "size": int(size.group(1)) if size else None, "max_price": int(budget.group(1).replace(",", ""))}
+
+
+def _demo_event(goal):
+    """Level 3's price drop for another query: a verified listing that meets it, cheapest over budget first, drops
+    about 15% (to under budget). Nothing meets the query: no event, and the watcher has nothing to watch."""
+    ok = [x for x in DEMO["listings"] if DEMO["sellers"][x["seller"]]["verified"]
+          and (goal["type"] is None or x["type"] == goal["type"]) and (goal["color"] is None or x["color"] == goal["color"])
+          and (goal["size"] is None or goal["size"] in x["sizes"])]
+    over = [x for x in ok if x["price"] > goal["max_price"]]
+    x = min(over or ok, key=lambda x: x["price"], default=None)
+    if x is None:
+        return {}
+    new = min(x["price"], goal["max_price"]) * 85 // 100 // 10 * 10 - 1      # ₹1,349 → ₹1,139, ₹749 → ₹629
+    return {"id": x["id"], "old_price": x["price"], "new_price": new}
+
+
 def _from_evidence(ev, recorded):
     """Map the collector's candidates onto listings. Nothing is invented: unknown stays unknown."""
     from patterns import live
     budget = ev.get("budget", DEMO["goal"]["max_price"])
-    goal = {"query": f"Black running shoes under ₹{budget:,}", "color": "black", "type": "running", "size": None,
-            "max_price": budget}
+    want = ev.get("goal") or {"color": "black", "type": "running"}        # older collections were all this query
+    goal = {"query": f"{live.words(want).capitalize()} under ₹{budget:,}", "color": want.get("color"),
+            "type": want.get("type"), "size": None, "max_price": budget}
+    kinds = [w for w, t in TYPES.items() if t == goal["type"]]
     listings, sellers = [], {}
     for c in ev["candidates"]:
         lines = []                       # brand and name, up to the first line that carries a price
@@ -84,7 +133,9 @@ def _from_evidence(ev, recorded):
         if not recorded and (datetime.now().astimezone() - datetime.fromisoformat(c["observed_at"])).total_seconds() > live.FRESH_SECONDS:
             problems.append("evidence older than 15 minutes")
         listings.append({"id": c["offer_id"], "store": c["marketplace"], "name": name, "price": round(c["observed_price_inr"]),
-                         "type": "running" if "running" in text else "other", "color": "black" if "black" in text else "other",
+                         "type": goal["type"] if any(w in text for w in kinds) else "other" if goal["type"] else "any",
+                         "color": goal["color"] if goal["color"] and goal["color"] in text else "other" if goal["color"]
+                         else "any",
                          "sizes": None, "seller": c["offer_id"], "url": c["source_url"],
                          "evidence": "product page read" if c.get("detail_status") == "OBSERVED" else
                                      "search index" if c.get("evidence_mode") == "search_index_fallback" else "search page"})
@@ -122,13 +173,32 @@ def view():
     return [{**x, "price": price(x["id"])} for x in LISTINGS.values()]
 
 
+def item_text(plural=True):
+    """The goal's colour and type in words: "black running shoes"."""
+    return " ".join(w for w in (GOAL.get("color"), GOAL.get("type"), "shoes" if plural else "shoe") if w)
+
+
 def size_text():
     return f"size {GOAL['size']}" if GOAL.get("size") else "size (unverified)"
 
 
+def keyword():
+    """The one word the Level 0 developer put in the script's search box: the query's colour, or else its type."""
+    return GOAL.get("color") or GOAL.get("type") or "shoe"
+
+
 def dropped_text():
-    """What a script that never checks type or size silently drops."""
-    return "“running” or “size 9”" if GOAL.get("size") else "“running”"
+    """What a script that only searches for keyword() and checks the price silently drops."""
+    left = [f"“{w}”" for w in (GOAL.get("color"), GOAL.get("type")) if w and w != keyword()]
+    left += [f"“size {GOAL['size']}”"] if GOAL.get("size") else []
+    return " or ".join(left) or "nothing else"
+
+
+def fits(lid):
+    """Does a listing meet the query (type, colour, size, budget)? The seller is a separate check."""
+    x, g = LISTINGS[lid], GOAL
+    return ((g.get("type") is None or x["type"] == g["type"]) and (g.get("color") is None or x["color"] == g["color"])
+            and in_stock(lid, g.get("size")) and price(lid) <= g["max_price"])
 
 
 def proposal(lid):
@@ -154,7 +224,7 @@ def search_catalog(keyword):
 
 
 def search_store(store, kind=None, color=None):
-    """One store's listings, optionally by type and colour."""
+    """One store's listings, optionally by type and colour (None: any)."""
     return [i for i, x in LISTINGS.items() if x["store"] == store
             and (kind is None or x["type"] == kind) and (color is None or x["color"] == color)]
 

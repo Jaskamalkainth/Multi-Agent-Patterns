@@ -34,7 +34,8 @@ def run(auto_drop=6.0):
     reply = c.think("lead", "You are a watcher. Decide whether this price change matters for the saved query.",
                     {"event": event, "saved_query": world.GOAL}, ["trigger", "ignore"],
                     offline={"action": "trigger", "say": f"{event['name']} is now ₹{event['new_price']:,}, under "
-                                                         "budget. Waking the team."})
+                                                         "budget. Waking the team."} if world.fits(event["id"]) else
+                            {"action": "ignore", "say": f"{event['name']} doesn't meet the saved query."})
     c.say("lead", reply["say"])
     if reply["action"] != "trigger":
         c.note("The watcher decided it doesn't matter. Back to sleep.")

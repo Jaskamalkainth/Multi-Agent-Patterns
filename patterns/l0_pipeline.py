@@ -3,8 +3,9 @@
     query → search → filter → pick → checkout
 
 Communication: fixed hand-offs, each box passes its output to the next. Nobody can add a step.
-The developer searched for "black", filtered on price and picked the cheapest. Nobody wrote a step for
-"running" or "size 9", so those requirements are silently dropped. The LLM only writes the confirmation.
+The developer searched for one keyword from the query (its colour), filtered on price and picked the cheapest.
+Nobody wrote a step for the type or the size ("running" and "size 9" in the default query), so those
+requirements are silently dropped. The LLM only writes the confirmation.
 """
 from typing import TypedDict
 
@@ -27,11 +28,12 @@ class State(TypedDict, total=False):
 
 def search(state):
     c.status("search", "active", "searching")
-    found = world.search_catalog("black")
-    c.tool("search", "search_catalog", {"keyword": "black"}, f"{len(found)} listings")
+    word = world.keyword()
+    found = world.search_catalog(word)
+    c.tool("search", "search_catalog", {"keyword": word}, f"{len(found)} listings")
     c.listing(found, "checked")
     c.status("search", "done", f"{len(found)} found")
-    c.msg("search", "filter", "data", f"{len(found)} listings with “black”")
+    c.msg("search", "filter", "data", f"{len(found)} listings with “{word}”")
     return {"found": found}
 
 
