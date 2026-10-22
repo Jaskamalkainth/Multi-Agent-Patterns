@@ -7,7 +7,7 @@ import pytest
 
 import patterns
 from lab import llm
-from patterns import common, l2_team, score, world
+from patterns import common, l1_orchestrator, l2_team, score, world
 
 
 @pytest.fixture(scope="module")
@@ -47,6 +47,26 @@ def test_level2_scouts_run_in_parallel_and_the_critic_sends_the_pick_back():
 def test_without_the_critic_level2_buys_the_fake(monkeypatch):
     monkeypatch.setattr(l2_team, "after_evaluator", lambda state: "checkout")
     assert patterns.run(2)["grade"]["pick"] == "c3"
+
+
+def test_a_seller_missing_from_the_register_counts_as_unverified(monkeypatch):
+    shoe = {"id": "b4", "store": "demo-store-b", "name": "Campus black running shoe", "price": 599, "type": "running",
+            "color": "black", "sizes": [8, 9], "seller": "QuickKicks"}     # the README's exercise, seller not registered
+    monkeypatch.setitem(world.DEMO, "listings", world.DEMO["listings"] + [shoe])
+    world.use("demo")
+    try:
+        assert [patterns.run(n, auto_drop=0.05)["grade"]["pick"] for n in range(3)] == ["a2", "b4", "c2"]
+        assert score.grade("b4")["checks"]["genuine seller"] is False
+    finally:
+        monkeypatch.undo()
+        world.use("demo")
+
+
+def test_a_worker_added_to_level1_gets_planned(monkeypatch):
+    monkeypatch.setitem(l1_orchestrator.SKILLS, "seller", "drop listings from unverified sellers")
+    monkeypatch.setattr(l1_orchestrator, "PLAN", ["search", "size", "price", "seller", "pick"])
+    with pytest.raises(NotImplementedError, match="seller"):   # planned, so its missing branch shows up at once
+        patterns.run(1)
 
 
 def test_grader():

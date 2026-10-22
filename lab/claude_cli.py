@@ -1,6 +1,6 @@
 """LAB_LLM=claude: the local Claude Code CLI (`claude -p`) as the model, with your saved Claude login.
 
-The same bridge as the CrewAI lab (demos/claude_bridge.py): no API key, no tools, structured output only.
+No API key, no tools, structured output only.
   - API keys are removed from the subprocess, so the CLI uses the saved login (run `claude` once).
   - The model gets no tools and no settings or MCP servers: it only reads the prompt and answers.
   - Every answer must match a JSON schema (--json-schema), and a reply that tried to use a tool is rejected.

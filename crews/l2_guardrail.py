@@ -81,7 +81,8 @@ def build(ask_first=False):
         return Choice(listing_id=kit.cheapest(left), reason=f"Best offer: {world.label(kit.cheapest(left))}.")
 
     evaluator = kit.agent("evaluator", "Evaluator", "Pick the cheapest listing that meets the query.", Choice, best)
-    tasks.append(kit.task("Query: {query}\nFrom the scouts' matches, pick the cheapest listing.", evaluator, Choice,
+    tasks.append(kit.task("Query: {query}\nListings: {listings}\nFrom the scouts' matches, pick the cheapest listing.",
+                          evaluator, Choice,
                           context=list(tasks), guardrail=critic, guardrail_max_retries=2))
     return Crew(agents=scouts + [evaluator], tasks=tasks, process=Process.sequential, verbose=False)
 
@@ -100,7 +101,8 @@ def run_team(ask_first=False):
     for s in world.STORES:
         c.msg("lead", "scout-" + s, "task", f"check {s}")
         c.status("scout-" + s, "active", "searching")
-    inputs = {"query": world.QUERY, **{key(s): kit.listings(world.search_store(s)) for s in world.STORES}}
+    inputs = {"query": world.QUERY, "listings": kit.listings(),   # the evaluator compares prices, not the scouts' notes
+              **{key(s): kit.listings(world.search_store(s)) for s in world.STORES}}
     result = build(ask_first).kickoff(inputs=inputs)
     pick = kit.bought(kit.value(result, Choice).listing_id)
     if pick is None:

@@ -73,3 +73,9 @@ def test_only_run_py_flags_are_accepted(base):
         with pytest.raises(urllib.error.HTTPError) as err:
             post(base, "/run", {"args": args})
         assert err.value.code == 409
+
+
+def test_a_malformed_body_is_a_409_not_a_crash(base):
+    with pytest.raises(urllib.error.HTTPError) as err:
+        urllib.request.urlopen(urllib.request.Request(base + "/stop", data=b"not json", method="POST"), timeout=10)
+    assert err.value.code == 409

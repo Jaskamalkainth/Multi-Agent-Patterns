@@ -16,7 +16,7 @@ def agent(id, role, goal, model, script):
 
 
 def task(description, agent, model, context=(), callback=None, **kw):
-    return Task(description=description, expected_output=f"Only a schema-valid {model.__name__}", agent=agent,
+    return Task(description=description, expected_output=f"Only a schema-valid {model.__name__}; its text is one short sentence", agent=agent,
                 context=list(context), output_pydantic=model, callback=callback, **kw)
 
 

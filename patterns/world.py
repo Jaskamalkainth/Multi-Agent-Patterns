@@ -23,6 +23,8 @@ from pathlib import Path
 DEMO = json.loads((Path(__file__).resolve().parent.parent / "data" / "shoes.json").read_text(encoding="utf-8"))
 HOSTS = {"Amazon": "amazon.in", "Flipkart": "flipkart.com", "Myntra": "myntra.com"}
 
+UNKNOWN = {"verified": False, "note": "not in the seller register"}
+
 GOAL, LISTINGS, SELLERS, EVENT, STORES, SOURCE = {}, {}, {}, {}, [], {}
 QUERY = ""
 _prices = {}
@@ -39,7 +41,8 @@ def use(kind="demo", progress=lambda text: None, headless=None, fresh=False, que
         raise ValueError("A recording replays the query it was collected for. Use Live sites to search for yours.")
     if kind == "demo":
         goal = parse(query) if query else dict(DEMO["goal"])
-        listings, sellers, stores = DEMO["listings"], DEMO["sellers"], sorted({x["store"] for x in DEMO["listings"]})
+        listings, stores = DEMO["listings"], sorted({x["store"] for x in DEMO["listings"]})
+        sellers = {**{x["seller"]: UNKNOWN for x in listings}, **DEMO["sellers"]}   # not in the register: unverified
         event = DEMO["event"] if goal == DEMO["goal"] else _demo_event(goal)
         source = {"kind": "demo", "label": "Demo stores"}
     else:
@@ -95,7 +98,7 @@ def parse(query):
 def _demo_event(goal):
     """Level 3's price drop for another query: a verified listing that meets it, cheapest over budget first, drops
     about 15% (to under budget). Nothing meets the query: no event, and the watcher has nothing to watch."""
-    ok = [x for x in DEMO["listings"] if DEMO["sellers"][x["seller"]]["verified"]
+    ok = [x for x in DEMO["listings"] if DEMO["sellers"].get(x["seller"], UNKNOWN)["verified"]
           and (goal["type"] is None or x["type"] == goal["type"]) and (goal["color"] is None or x["color"] == goal["color"])
           and (goal["size"] is None or goal["size"] in x["sizes"])]
     over = [x for x in ok if x["price"] > goal["max_price"]]
@@ -238,7 +241,7 @@ def in_stock(lid, size):
 
 def seller_check(lid):
     s = LISTINGS[lid]["seller"]
-    return {"seller": s if s in DEMO["sellers"] else LISTINGS[lid]["store"], **SELLERS[s]}
+    return {"seller": s if SOURCE.get("kind") == "demo" else LISTINGS[lid]["store"], **SELLERS[s]}
 
 
 # ---------------------------------------------------------------- the price feed (Level 3)
