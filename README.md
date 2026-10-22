@@ -7,7 +7,8 @@ right shoe and what it costs. Nothing is ever really bought.
 
 ## Quick start
 
-Python 3.10+. No API key needed: by default the agents use scripted replies.
+Python 3.10+ (3.10–3.13 if you want the CrewAI extras; see below). No API key needed: by default the agents use
+scripted replies.
 
 ```bash
 python -m venv .venv
@@ -24,7 +25,7 @@ demo where you pick the framework, the brain (scripted or Claude) and the world 
 
 | Want | Do |
 |---|---|
-| CrewAI version | `pip install -r requirements-crewai.txt` |
+| CrewAI version | `pip install -r requirements-crewai.txt` (needs Python 3.10–3.13) |
 | Real listings from Amazon.in, Flipkart, Myntra | `pip install -r requirements-live.txt` (uses your Chrome) |
 | Claude as the brain, no API key | Install [Claude Code](https://claude.com/claude-code) and run `claude` once to log in |
 | Other settings | Copy `.env.example` to `.env` |
@@ -75,6 +76,8 @@ Three small CrewAI projects in `notebooks/` to try on your own after the session
 | `02_customer_support.ipynb` | Support rep + QA reviewer | Tools, delegation, memory |
 | `03_financial_analysis.ipynb` | Analyst, strategist, trade and risk advisors | `Process.hierarchical`: a manager agent delegates |
 
+These need Python 3.10–3.13, like the CrewAI version of the demo.
+
 ```bash
 pip install -r requirements-crewai.txt jupyterlab
 jupyter lab notebooks/
@@ -109,5 +112,6 @@ Run output (logs, checkpoints, live collections) goes to `output/`, which git ig
 |---|---|
 | Port 8700 in use | `python app.py --port 8800 --live-port 8801` |
 | CrewAI or Live sites greyed out | Install the matching `requirements-*.txt` |
+| `pip install -r requirements-crewai.txt` fails with "No matching distribution found for crewai==1.15.28" | You're on Python 3.14+. CrewAI 1.15.28 declares `Requires-Python: >=3.10,<3.14` ([PyPI](https://pypi.org/project/crewai/1.15.28/), [CrewAI install docs](https://docs.crewai.com/en/installation)). Make the venv with 3.13 or older: `py -3.13 -m venv .venv` (macOS/Linux: `python3.13 -m venv .venv`) |
 | "claude CLI not found" | Install Claude Code and run `claude` once, or set `CLAUDE_BIN` |
 | A store shows "no listings read" | The site blocked the browser. Retry, or use **Live · recording** |
