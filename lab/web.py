@@ -64,8 +64,8 @@ class Handler(BaseHTTPRequestHandler):
         origin = self.headers.get("Origin")
         if origin and origin.split("://")[-1] != self.headers.get("Host"):
             return self.json({"error": "cross-origin request"}, 403)
-        body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
         try:
+            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
             self.post(self.path, body)
         except LookupError:
             return self.json({"error": "not found"}, 404)

@@ -47,7 +47,7 @@ def planner(state):
                                                       f"₹{world.GOAL['max_price']:,}, then the cheapest.",
                              "tasks": [s for s in PLAN if s != "size" or world.GOAL.get("size")]},
                     fields={"tasks": f"ordered list of workers from {PLAN}"})
-    plan = [s for s in dict.fromkeys(reply.get("tasks") or []) if s in ("size", "price")]
+    plan = [s for s in dict.fromkeys(reply.get("tasks") or []) if s in SKILLS and s not in ("search", "pick")]
     plan = ["search", *plan, "pick"]
     c.say("planner", reply["say"])
     c.status("planner", "active", f"plan: {len(plan)} tasks")
@@ -81,6 +81,8 @@ def worker(state):
         keep = [i for i in ids if world.price(i) <= g["max_price"]]
         c.listing([i for i in ids if i not in keep], "out", "over budget")
         ids, summary = keep, f"{len(keep)} under ₹{g['max_price']:,}"
+    elif skill != "pick":                    # a skill added to SKILLS needs its own branch above
+        raise NotImplementedError(f"worker() has no branch for the {skill!r} skill")
     elif not ids:
         out.update(pick=None, answer="Nothing found.")
         summary = "nothing left to pick"
@@ -130,7 +132,7 @@ def build():
 def run():
     c.agent("planner", "Planner")
     for s in SKILLS:
-        c.agent(s, LABEL[s])
+        c.agent(s, LABEL.get(s, s.title()))
     c.step("You give one sentence: the query")
     c.msg("you", "planner", "task", world.QUERY)
     return build().invoke({"query": world.QUERY})

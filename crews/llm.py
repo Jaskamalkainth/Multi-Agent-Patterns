@@ -1,4 +1,4 @@
-"""The Claude bridge as a CrewAI LLM, the same way as the CrewAI lab (demos/crewai_lab/lab.py).
+"""The Claude bridge (lab/claude_cli.py) as a CrewAI LLM.
 
 CrewAI calls BridgeLLM.call() with the agent's whole transcript. The bridge sends it to lab.llm.structured(),
 which runs the Claude CLI with the task's JSON schema (or the script, offline), validates the answer with

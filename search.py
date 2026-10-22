@@ -75,18 +75,21 @@ def common_query():
 
 def scoreboard(results):
     t = Table(title="Same query, four patterns")
-    for col in ("Level", "Framework", "Answer", "Score", "Agents", "LLM calls", "Tokens", "Human steps", "Seconds"):
-        t.add_column(col, justify="left" if col in ("Level", "Framework", "Answer") else "right")
+    for col in ("Level", "Framework", "Answer", "Score", "Agents", "Calls", "Tokens", "Human", "Secs"):
+        if col in ("Level", "Answer"):   # only these wrap, so a projector-sized terminal still fits the numbers
+            t.add_column(col, ratio=2 if col == "Answer" else 1)
+        else:
+            t.add_column(col, justify="left" if col in ("Level", "Framework") else "right", no_wrap=True)
     for r in sorted(results, key=lambda r: (r["level"], r["framework"] != "langgraph")):
         g, s = r["grade"], r["stats"]
+        level = f"L{r['level']} " + r["title"].split(" · ", 1)[-1]
+        framework = {"langgraph": "LangGraph", "crewai": "CrewAI"}[r["framework"]]
+        counts = (str(s["agents"]), str(s["llm_calls"]), f"{s['tokens']:,}", str(s["human_steps"]), str(s["seconds"]))
         if not g:
-            t.add_row(r["title"], {"langgraph": "LangGraph", "crewai": "CrewAI"}[r["framework"]], "nothing bought", "—", str(s["agents"]), str(s["llm_calls"]),
-                      f"{s['tokens']:,}", str(s["human_steps"]), str(s["seconds"]))
+            t.add_row(level, framework, "nothing bought", "—", *counts)
             continue
         color = "green" if g["score"] == g["of"] else "yellow" if g["score"] > 1 else "red"
-        t.add_row(r["title"], {"langgraph": "LangGraph", "crewai": "CrewAI"}[r["framework"]],
-                  f"{g['name']} · ₹{g['price']:,}", f"[{color}]{g['score']}/{g['of']}[/]", str(s["agents"]),
-                  str(s["llm_calls"]), f"{s['tokens']:,}", str(s["human_steps"]), str(s["seconds"]))
+        t.add_row(level, framework, f"{g['name']} · ₹{g['price']:,}", f"[{color}]{g['score']}/{g['of']}[/]", *counts)
     console.print()
     console.print(t)
 

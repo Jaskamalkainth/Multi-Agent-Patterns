@@ -1,5 +1,4 @@
-"""Live evidence from Amazon.in, Flipkart and Myntra. A Python port of the CrewAI lab's browser collector
-(demos/marketplace_service/browser_search.cjs): Playwright drives your installed Chrome.
+"""Live evidence from Amazon.in, Flipkart and Myntra. Playwright drives your installed Chrome.
 
   collect(goal)      search the three sites for the goal, read up to 4 results each, open up to 2 product pages each
   latest()           the last collection, if any (output/live/latest.json)
@@ -30,7 +29,7 @@ SITES = [
 FRESH_SECONDS = 15 * 60
 UNVERIFIED = ["size", "stock", "delivery", "returns", "shipping", "checkout_total"]
 
-# Runs inside the page: one extractor per site, the same selectors as the CrewAI lab's collector.
+# Runs inside the page: one extractor per site.
 EXTRACT = r"""market => {
   const price = t => { const m = t.match(/(?:₹|Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)/i); return m ? Number(m[1].replaceAll(',', '')) : null; };
   const arr = [];
