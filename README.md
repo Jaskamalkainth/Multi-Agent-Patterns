@@ -1,9 +1,29 @@
 # Multi-Agent Patterns in LangGraph & CrewAI
 
-A hands-on session on how AI agents coordinate. One shopping query, **"Black running shoes, size 9, under ₹1,000"**,
-runs through four coordination patterns in [LangGraph](https://github.com/langchain-ai/langgraph) and
-[CrewAI](https://github.com/crewAIInc/crewAI). A grader scores every purchase, so you can see which pattern buys the
-right shoe and what it costs. Nothing is ever really bought.
+A hands-on session on how AI agents coordinate. Watch eight coordination patterns play out step by step, then run
+four of them as real agents in [LangGraph](https://github.com/langchain-ai/langgraph) and
+[CrewAI](https://github.com/crewAIInc/crewAI) on a shopping task, where a grader scores what each one buys.
+
+<p align="center">
+  <img src="docs/screenshots/patterns-hierarchical.gif" width="640"
+       alt="Animated simulation: a manager agent delegates to a researcher and a writer, then adds a verifier step nobody planned">
+</p>
+
+## What you'll see
+
+**Eight coordination patterns, animated.** Watch messages move between agents, and see what lands in each agent's
+context window and how many tokens it costs.
+
+| Hierarchical process | Parallel fan-out / fan-in |
+|---|---|
+| ![A manager delegates and adds a verifier when two sources disagree](docs/screenshots/pattern-hierarchical.png) | ![Three workers run at once; the aggregator waits for the slowest](docs/screenshots/pattern-fan-out-fan-in.png) |
+| **Critic loop** | **Event-driven** |
+| ![A reviewer flags the draft and sends it back for rework](docs/screenshots/pattern-critic-loop.png) | ![A price change wakes the team, which asks you before acting](docs/screenshots/pattern-event-driven.png) |
+
+**The live demo runs real LangGraph graphs and CrewAI crews.** Here Level 2 sends three scouts to the stores in
+parallel, and the critic rejects a fake reseller before anything is bought:
+
+![Live demo: three scouts, an evaluator and a critic; the critic rejects ShoeHub Outlet as an unverified reseller](docs/screenshots/live-team-critic.png)
 
 ## Quick start
 
@@ -32,7 +52,9 @@ demo where you pick the framework, the brain (scripted or Claude) and the world 
 
 ## The four patterns
 
-The grader checks four things: black running shoe · size 9 in stock · under ₹1,000 · genuine seller.
+By default the agents shop for **"Black running shoes, size 9, under ₹1,000"** across three demo stores. Nothing is
+ever really bought. The grader checks four things: black running shoe · size 9 in stock · under ₹1,000 · genuine
+seller.
 
 | Level | Pattern | Bought | Score | Why |
 |---|---|---|---|---|
@@ -42,6 +64,9 @@ The grader checks four things: black running shoe · size 9 in stock · under �
 | L3 | **Event-driven** (a price drop wakes the team) | Sparx running shoe · ₹849 | 4/4 | ₹130 cheaper, no human steps, and it asks before buying |
 
 Each level is more autonomous and spends more tokens. The code is in `patterns/` (LangGraph) and `crews/` (CrewAI).
+Press **Run all four** in the live demo and the scoreboard fills in:
+
+![Scoreboard: L0 scores 2/4, L1 3/4, L2 and L3 4/4, with agents, LLM calls and tokens for each](docs/screenshots/scoreboard.png)
 
 **Your own query:** the shoe query is the default, but any query with a colour, a type (`running` or `casual`), an
 optional size and a budget works on the demo stores. Type it in the Query box on the page, or
@@ -106,6 +131,7 @@ web/          the talk and demo pages
 data/         demo stores and a recorded live collection
 notebooks/    CrewAI practice notebooks
 tests/
+docs/         README screenshots
 ```
 
 Run output (logs, checkpoints, live collections) goes to `output/`, which git ignores.
