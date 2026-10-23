@@ -1,13 +1,13 @@
-"""One Query, Four Patterns: the script twin of 04_shopping_patterns.ipynb. Run it from the repo root or notebooks/:
+"""One Query, Four Patterns · LangGraph: the script twin of 04_shopping_patterns_langgraph.ipynb. Run it from the repo root or notebooks/:
 
-    python notebooks/04_shopping_patterns.py
+    python notebooks/04_shopping_patterns_langgraph.py
 
 Same cells, same code as the notebook; the Markdown cells are the comments.
 """
 
 
 # %% [markdown]
-# # One Query, Four Patterns
+# # One Query, Four Patterns · LangGraph
 #
 # The shopping demo from the talk, in a notebook. Four agent teams get the same query,
 # **"Black running shoes, size 9, under ₹1,000"**, the same three demo stores, the same tools and the same grader.
@@ -22,7 +22,7 @@ Same cells, same code as the notebook; the Markdown cells are the comments.
 #
 # This notebook doesn't copy the agents: it imports the repo's own LangGraph code, so what you change in
 # `patterns/` shows up here. It runs offline with scripted replies by default, so you don't need a key.
-# Nothing is ever really bought.
+# Nothing is ever really bought. The same four patterns in CrewAI are in `05_shopping_patterns_crewai.ipynb`.
 
 
 # %%
@@ -132,6 +132,17 @@ def report(r):
         print(f"  {'✓' if ok else '✗'} {k:<19} {g['why'][k]}")
 
 
+def scoreboard(results):
+    rows = ["| Level | Framework | Bought | Score | Agents | LLM calls | Tokens | Human steps |",
+            "|---|---|---|---|---|---|---|---|"]
+    for r in results:
+        g, s = r["grade"], r["stats"]
+        bought, sc = (f"{g['name']} · ₹{g['price']:,}", f"{g['score']}/{g['of']}") if g else ("nothing", "—")
+        fw = {"langgraph": "LangGraph", "crewai": "CrewAI"}[r["framework"]]
+        rows.append(f"| {r['title']} | {fw} | {bought} | {sc} | {s['agents']} | {s['llm_calls']} | {s['tokens']:,} | {s['human_steps']} |")
+    display(Markdown("\n".join(rows)))
+
+
 def graph(module):
     g = module.build().get_graph()
     if NOTEBOOK:   # JupyterLab 4.1+ draws Mermaid; elsewhere you see the Mermaid text (paste it into mermaid.live)
@@ -227,15 +238,6 @@ report(results[3])
 
 
 # %%
-def scoreboard(results):
-    rows = ["| Level | Bought | Score | Agents | LLM calls | Tokens | Human steps |", "|---|---|---|---|---|---|---|"]
-    for r in results:
-        g, s = r["grade"], r["stats"]
-        bought, sc = (f"{g['name']} · ₹{g['price']:,}", f"{g['score']}/{g['of']}") if g else ("nothing", "—")
-        rows.append(f"| {r['title']} | {bought} | {sc} | {s['agents']} | {s['llm_calls']} | {s['tokens']:,} | {s['human_steps']} |")
-    display(Markdown("\n".join(rows)))
-
-
 scoreboard(results.values())
 
 
@@ -278,22 +280,5 @@ stop_listening = common.listen(show)
 # **4. Make Level 1 safer.** Give the planner a `seller` worker in `patterns/l1_orchestrator.py` (a new
 # entry in `SKILLS` and a branch in `worker()` that calls `world.seller_check`). Does it now match Level 2,
 # and how do the two compare on tokens?
-
-
-# %% [markdown]
-# ## Optional: the same four patterns in CrewAI
 #
-# `crews/` builds the same levels with CrewAI (`Process.sequential`, a planner task, async tasks with a
-# guardrail as the critic, and a `Flow`). Same stores, same grader, so you can compare the frameworks like
-# for like. Needs `pip install -r ../requirements-crewai.txt` (Python 3.10–3.13).
-
-
-# %%
-import crews
-
-if crews.available():
-    stop_listening()
-    scoreboard([crews.run(n, auto_drop=0.5) for n in range(4)])
-    stop_listening = common.listen(show)
-else:
-    print("CrewAI is not installed: pip install -r ../requirements-crewai.txt")
+# **Next:** the same four patterns in CrewAI, in `05_shopping_patterns_crewai.ipynb`.

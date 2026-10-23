@@ -97,14 +97,20 @@ To start with Claude as the brain: `LAB_LLM=claude LAB_MODEL=haiku python app.py
 
 ## Further practice: notebooks
 
-Start with `04_shopping_patterns.ipynb`: the demo itself, step by step. It imports the repo's LangGraph code, runs
-all four levels on the shoe query, draws each graph, fills in the scoreboard and has the exercises (remove the
-critic, your own query, add a trap). It runs offline with the base `requirements.txt` plus Jupyter; no key needed.
+Start with the demo itself, step by step, in either framework. Each notebook imports the repo's own code, runs all
+four levels on the shoe query, fills in the scoreboard and ends with exercises (remove the critic, your own query,
+add a trap). Both run offline; no key needed. Each `.ipynb` has a `.py` twin with the same cells, which runs as a
+plain script (and opens as cells in VS Code or PyCharm).
+
+| Notebook | Framework | What you see |
+|---|---|---|
+| `04_shopping_patterns_langgraph` | LangGraph (`patterns/`) | Each level's graph, then its run |
+| `05_shopping_patterns_crewai` | CrewAI (`crews/`) | Each crew's tasks, the Flow, and a CrewAI vs LangGraph scoreboard |
 
 ```bash
-pip install -r requirements.txt jupyterlab
-jupyter lab notebooks/04_shopping_patterns.ipynb
-python notebooks/04_shopping_patterns.py      # or the same code as a plain script, no Jupyter needed
+pip install -r requirements.txt jupyterlab              # CrewAI notebook: -r requirements-crewai.txt instead
+jupyter lab notebooks/
+python notebooks/04_shopping_patterns_langgraph.py      # or a twin as a plain script, no Jupyter needed
 ```
 
 Then three small CrewAI projects to try on your own after the session. Each runs top to bottom.
