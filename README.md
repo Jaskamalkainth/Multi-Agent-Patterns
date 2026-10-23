@@ -97,21 +97,22 @@ To start with Claude as the brain: `LAB_LLM=claude LAB_MODEL=haiku python app.py
 
 ## Further practice: notebooks
 
-Start with the demo itself, step by step, in either framework. Each notebook imports the repo's own code, runs all
-four levels on the shoe query, fills in the scoreboard and ends with exercises (remove the critic, your own query,
-add a trap). Both run offline; no key needed. Each `.ipynb` has a `.py` twin with the same cells, which runs as a
-plain script (and opens as cells in VS Code or PyCharm).
+Start with the demo itself, step by step, in either framework. Each notebook runs all four levels on the shoe query,
+fills in the scoreboard and ends with exercises (remove the critic, add a trap, your own query). Each `.ipynb` has
+a `.py` twin with the same cells, which runs as a plain script (and opens as cells in VS Code or PyCharm).
 
-| Notebook | Framework | What you see |
-|---|---|---|
-| `04_shopping_patterns_langgraph` | LangGraph (`patterns/`) | Each level's graph, then its run |
-| `05_shopping_patterns_crewai` | CrewAI (`crews/`) | Each crew's tasks, the Flow, and a CrewAI vs LangGraph scoreboard |
+| Notebook | Framework | Needs | What you see |
+|---|---|---|---|
+| `04_shopping_patterns_langgraph` | LangGraph | this repo's `requirements.txt`; no key (scripted replies) | Imports `patterns/`: each level's graph, then its run |
+| `05_shopping_patterns_crewai` | CrewAI | only CrewAI and an LLM key, like 01–03 | Standalone: its own stores, tools, grader, crews and Flow |
 
 ```bash
-pip install -r requirements.txt jupyterlab              # CrewAI notebook: -r requirements-crewai.txt instead
+pip install -r requirements.txt jupyterlab
 jupyter lab notebooks/
 python notebooks/04_shopping_patterns_langgraph.py      # or a twin as a plain script, no Jupyter needed
 ```
+
+In `05_shopping_patterns_crewai`, set the key in the **Choose your LLM** cell, as in 01–03.
 
 Then three small CrewAI projects to try on your own after the session. Each runs top to bottom.
 
