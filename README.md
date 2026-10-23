@@ -95,9 +95,18 @@ python -m pytest -q               # tests, offline
 To start with Claude as the brain: `LAB_LLM=claude LAB_MODEL=haiku python app.py`
 (PowerShell: `$env:LAB_LLM="claude"; $env:LAB_MODEL="haiku"; python app.py`), or pick it on the page.
 
-## Further practice: CrewAI notebooks
+## Further practice: notebooks
 
-Three small CrewAI projects in `notebooks/` to try on your own after the session. Each runs top to bottom.
+Start with `04_shopping_patterns.ipynb`: the demo itself, step by step. It imports the repo's LangGraph code, runs
+all four levels on the shoe query, draws each graph, fills in the scoreboard and has the exercises (remove the
+critic, your own query, add a trap). It runs offline with the base `requirements.txt` plus Jupyter; no key needed.
+
+```bash
+pip install -r requirements.txt jupyterlab
+jupyter lab notebooks/04_shopping_patterns.ipynb
+```
+
+Then three small CrewAI projects to try on your own after the session. Each runs top to bottom.
 
 | Notebook | Agents | What you learn |
 |---|---|---|
@@ -129,7 +138,7 @@ patterns/     LangGraph versions        crews/   CrewAI versions
 lab/          guardrails lab, Claude bridge, servers
 web/          the talk and demo pages
 data/         demo stores and a recorded live collection
-notebooks/    CrewAI practice notebooks
+notebooks/    the demo as a notebook, and CrewAI practice notebooks
 tests/
 docs/         README screenshots
 ```
