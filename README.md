@@ -97,22 +97,21 @@ To start with Claude as the brain: `LAB_LLM=claude LAB_MODEL=haiku python app.py
 
 ## Further practice: notebooks
 
-Start with the demo itself, step by step, in either framework. Each notebook runs all four levels on the shoe query,
-fills in the scoreboard and ends with exercises (remove the critic, add a trap, your own query). Each `.ipynb` has
-a `.py` twin with the same cells, which runs as a plain script (and opens as cells in VS Code or PyCharm).
+Start with the demo itself, step by step, in either framework. Both notebooks are standalone, like 01–03: they
+define their own stores, tools and grader, need only their framework and an LLM key (set in the **Choose your
+LLM** cell), and carry notes to teach from: key points per pattern, questions for the room, and a cheat sheet.
+Each `.ipynb` has a `.py` twin with the same cells, which runs as a plain script (and opens as cells in VS Code
+or PyCharm).
 
-| Notebook | Framework | Needs | What you see |
-|---|---|---|---|
-| `04_shopping_patterns_langgraph` | LangGraph | this repo's `requirements.txt`; no key (scripted replies) | Imports `patterns/`: each level's graph, then its run |
-| `05_shopping_patterns_crewai` | CrewAI | only CrewAI and an LLM key, like 01–03 | Standalone: its own stores, tools, grader, crews and Flow |
+| Notebook | Framework | What you see |
+|---|---|---|
+| `04_shopping_patterns_langgraph` | LangGraph | State, nodes and edges; `Send` and reducers; a critic loop; a subgraph and `interrupt()` |
+| `05_shopping_patterns_crewai` | CrewAI | Agents, tasks and crews; async tasks; a guardrail as the critic; a `Flow` |
 
 ```bash
-pip install -r requirements.txt jupyterlab
-jupyter lab notebooks/
-python notebooks/04_shopping_patterns_langgraph.py      # or a twin as a plain script, no Jupyter needed
+pip install jupyterlab
+jupyter lab notebooks/          # each notebook installs its own framework in its first cell
 ```
-
-In `05_shopping_patterns_crewai`, set the key in the **Choose your LLM** cell, as in 01–03.
 
 Then three small CrewAI projects to try on your own after the session. Each runs top to bottom.
 
