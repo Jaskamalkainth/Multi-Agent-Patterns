@@ -104,6 +104,7 @@ critic, your own query, add a trap). It runs offline with the base `requirements
 ```bash
 pip install -r requirements.txt jupyterlab
 jupyter lab notebooks/04_shopping_patterns.ipynb
+python notebooks/04_shopping_patterns.py      # or the same code as a plain script, no Jupyter needed
 ```
 
 Then three small CrewAI projects to try on your own after the session. Each runs top to bottom.
