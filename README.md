@@ -97,9 +97,9 @@ To start with Claude as the brain: `LAB_LLM=claude LAB_MODEL=haiku python app.py
 
 ## Further practice: notebooks
 
-Start with the demo itself, step by step, in either framework. Both notebooks are standalone, like 01–03: they
-define their own stores, tools and grader, need only their framework and an LLM key (set in the **Choose your
-LLM** cell), and carry notes to teach from: key points per pattern, questions for the room, and a cheat sheet.
+These are practice notebooks. Start with the demo itself, step by step, in either framework. Both notebooks are
+standalone, like 01–03: they define their own stores, tools and grader, and need only their framework and an LLM
+key (set in the **Choose your LLM** cell).
 
 | Notebook | Framework | What you see |
 |---|---|---|
