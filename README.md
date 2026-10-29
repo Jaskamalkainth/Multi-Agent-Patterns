@@ -113,8 +113,8 @@ jupyter lab notebooks/          # each notebook installs its own framework in it
 
 Then build your own research team. Claude's Research mode is a multi-agent system: a lead agent plans and
 sends subagents to search in parallel. Notebook 06 builds a small version in plain Python, one piece at a time,
-compares it with a single agent, and ends with **your own question**. It needs only `langchain` and an LLM key;
-its search works offline, or on Wikipedia with no key.
+compares it with a single agent, and ends with **your own question**. It needs only `langchain` and an LLM key:
+the researchers answer from the model's own knowledge, and adding a search tool (Wikipedia, no key) is an exercise.
 
 | Notebook | Agents | What you see |
 |---|---|---|

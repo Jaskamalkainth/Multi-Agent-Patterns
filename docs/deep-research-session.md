@@ -90,22 +90,25 @@ Put the patterns slide back up and point at each one:
 ## 3. Build-along: notebook 06
 
 `notebooks/06_build_your_own_deep_research.ipynb`. Plain Python and one LLM call function, no framework, so
-every agent is visibly just a prompt and a function. Run the cells with the room; stop at each step:
+every agent is visibly just a prompt and a function. There's **no search tool by default**: the researchers
+answer from the model's own knowledge, so the room watches the coordination, not a search engine. The tool call
+sits in `researcher()`, commented out, and switching it on is an exercise.
+
+Run the cells with the room; stop at each step:
 
 | Step | Say this |
 |---|---|
-| The tool | "Eleven notes on *when is multi-agent worth it*, and one is a sponsored post with no evidence. Remember the fake reseller in the shopping demo? Same trap." |
-| 1. One agent | "This is what you'd build first. It reads everything in one context." |
-| 2. The lead | "The lead doesn't search. It writes the plan. The prompt *is* the team design." |
-| 3. Researchers | "Each one reads only its own results and returns short notes. Rerun with `parallel=False` and watch the clock." |
-| 4. Review | "The lead reads notes, not pages, and decides if it needs more. `max_rounds` is the way out." |
-| 5. Writer | "Code checks the citations. An LLM can invent a source id; a set difference can't." |
-| 6. Scoreboard | "More calls, more tokens, but look at *biggest prompt*: no agent had to read everything." |
+| 1. One agent | "This is what you'd build first: one call, the whole question." |
+| 2. The lead | "The lead doesn't answer. It writes the plan. The prompt *is* the team design." |
+| 3. Researchers | "Each one gets only its own task and returns short notes. See the commented line? That's where Claude's Research searches the web. Rerun with `parallel=False` and watch the clock." |
+| 4. Review | "The lead reads notes, not the researchers' whole work, and decides if it needs more. `max_rounds` is the way out." |
+| 5. Writer | "Every finding has a number, and code checks the citations. An LLM can cite F99; a range check can't be talked out of it." |
+| 6. Scoreboard | "More calls, more tokens. Without a tool, the team buys structure: separate angles, a review, numbered claims. With a tool, each researcher reads different sources, and that's where teams pull ahead." |
 
 ## 4. Hands-on
 
-Everyone does **Your turn 1**: set `SEARCH = "wikipedia"`, write their own question, run `deep_research()`.
-Good questions have independent parts: comparisons, pros and cons, "how did X change over time".
+Everyone does **Your turn 1**: write their own question and run `deep_research()`. Good questions have
+independent parts: comparisons, pros and cons, "how did X change over time".
 
 Then each person picks one change:
 
@@ -113,16 +116,17 @@ Then each person picks one change:
 - **Let the lead choose how many researchers** (effort scaling).
 - **Ask me first**: run `clarify_then_research()`.
 - **A cheaper model for the researchers**, a strong one for the lead.
-- **A real critic** that checks each finding against its source.
+- **Give the researchers a tool**: run the Wikipedia `search()` cell and uncomment the tool call in `researcher()`.
+- **A real critic** (with the tool on) that checks each finding against the pages the researcher read.
 
 Or use the mini app at the end of the notebook: a question box, sliders for researchers and rounds, and a
 Research button.
 
 Ask two or three people to share: what question, what they changed, and what the scoreboard said.
 
-**If the Wi-Fi or keys fail:** the `library` search works offline. Wikipedia can rate-limit a whole room on one
-network (HTTP 429): the notebook prints the error and carries on, so switch back to `library` or retry. For
-no key at all, use Ollama.
+**If the Wi-Fi or keys fail:** the main path needs only the LLM, no search. Wikipedia (the optional tool) can
+rate-limit a whole room on one network (HTTP 429): the notebook prints the error and carries on. For no key
+at all, use Ollama.
 
 ## 5. Wrap-up
 
