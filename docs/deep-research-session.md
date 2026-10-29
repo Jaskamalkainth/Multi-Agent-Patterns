@@ -125,8 +125,12 @@ Research button.
 Ask two or three people to share: what question, what they changed, and what the scoreboard said.
 
 **If the Wi-Fi or keys fail:** the main path needs only the LLM, no search. Wikipedia (the optional tool) can
-rate-limit a whole room on one network (HTTP 429): the notebook prints the error and carries on. For no key
-at all, use Ollama.
+rate-limit a whole room on one network (HTTP 429): the notebook prints the error and carries on.
+
+**Keys for the room:** send people to a free key before the session: Groq
+([console.groq.com/keys](https://console.groq.com/keys), set `PROVIDER = "groq"`) or Gemini
+([aistudio.google.com/api-keys](https://aistudio.google.com/api-keys)). Both free tiers have per-minute limits;
+the notebook retries when it gets a 429, so a run may just pause for a few seconds. For no key at all, use Ollama.
 
 ## 5. Wrap-up
 
