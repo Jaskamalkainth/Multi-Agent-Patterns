@@ -113,15 +113,15 @@ jupyter lab notebooks/          # each notebook installs its own framework in it
 
 Then build your own research team. Claude's Research mode is a multi-agent system: a lead agent plans and
 sends subagents to search in parallel. Notebook 06 builds a small version in plain Python, one piece at a time,
-compares it with a single agent, and ends with **your own question**. It needs only `langchain` and an LLM key:
+compares it with a single agent, and ends with **your own question**. Its first cell installs what it needs; you bring an LLM key:
 the researchers answer from the model's own knowledge, and adding a search tool (Wikipedia, no key) is an exercise.
 
 | Notebook | Agents | What you see |
 |---|---|---|
 | `06_build_your_own_deep_research` | Lead → parallel researchers → lead review → writer | Hierarchical, fan-out / fan-in, selective context and a critic loop, in one small team you edit |
 
-The talk notes for this part, from the "who has used Deep Research?" opener to the hands-on, are in
-[`docs/deep-research-session.md`](docs/deep-research-session.md).
+It's visual and hands-on: diagrams of how Deep Research works, timeline charts of the agents working in
+parallel, a live editor for the lead's prompt, a quiz, and key notes with sources at the end.
 
 Then three small CrewAI projects to try on your own after the session. Each runs top to bottom.
 
@@ -158,7 +158,7 @@ web/          the talk and demo pages
 data/         demo stores and a recorded live collection
 notebooks/    the demo as a notebook, build-your-own deep research, CrewAI practice notebooks
 tests/
-docs/         README screenshots, talk notes
+docs/         README screenshots
 ```
 
 Run output (logs, checkpoints, live collections) goes to `output/`, which git ignores.
