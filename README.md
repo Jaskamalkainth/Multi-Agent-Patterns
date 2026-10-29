@@ -6,19 +6,20 @@ four of them as real agents in [LangGraph](https://github.com/langchain-ai/langg
 
 <p align="center">
   <img src="docs/screenshots/patterns-hierarchical.gif" width="640"
-       alt="Animated simulation: a manager agent delegates to a researcher and a writer, then adds a verifier step nobody planned">
+       alt="Animated simulation of the hierarchical pattern: first a manager adds a fact-check nobody planned; then, buried in its workers' full reports, it ships the blog post without the sign-up CTA from the brief">
 </p>
 
 ## What you'll see
 
-**Eight coordination patterns, animated.** Watch messages move between agents, and see what lands in each agent's
-context window and how many tokens it costs.
+**Eight coordination patterns, animated.** Each one plays twice on an everyday task: first **how it works**, then
+**where it breaks**. Watch messages move between agents, and see what lands in each agent's context window and how
+many tokens it costs.
 
-| Hierarchical process | Parallel fan-out / fan-in |
-|---|---|
-| ![A manager delegates and adds a verifier when two sources disagree](docs/screenshots/pattern-hierarchical.png) | ![Three workers run at once; the aggregator waits for the slowest](docs/screenshots/pattern-fan-out-fan-in.png) |
-| **Critic loop** | **Event-driven** |
-| ![A reviewer flags the draft and sends it back for rework](docs/screenshots/pattern-critic-loop.png) | ![A price change wakes the team, which asks you before acting](docs/screenshots/pattern-event-driven.png) |
+| | ✓ How it works | ⚠ Where it breaks |
+|---|---|---|
+| **Parallel fan-out / fan-in** | ![Flights, weather and hotels are searched at once; a 3-day Goa plan is ready in the time of one search](docs/screenshots/pattern-fan-out-fan-in-works.png) | ![Hotels checks 40 sites, so the itinerary waits for the slowest branch](docs/screenshots/pattern-fan-out-fan-in-breaks.png) |
+| **Critic loop** | ![The tester catches a crash on an empty list; the coder fixes it and it is approved on attempt 2](docs/screenshots/pattern-critic-loop-works.png) | ![The price API is down, so no code change can pass; the loop stops after 3 attempts and asks a human](docs/screenshots/pattern-critic-loop-breaks.png) |
+| **Event-driven** | ![An error spike at 3 a.m. wakes the team, which investigates and asks you before rolling back](docs/screenshots/pattern-event-driven-works.png) | ![Nobody checks or asks: the on-call team guesses wrong and makes changes in production while you sleep](docs/screenshots/pattern-event-driven-breaks.png) |
 
 **The live demo runs real LangGraph graphs and CrewAI crews.** Here Level 2 sends three scouts to the stores in
 parallel, and the critic rejects a fake reseller before anything is bought:
