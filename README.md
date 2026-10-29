@@ -117,7 +117,7 @@ own knowledge, so all you need is an LLM key.
 
 | Notebook | Agents | What you see |
 |---|---|---|
-| `07_deep_research_crewai` | Lead → 3 researchers in parallel → writer | **Start here.** About 50 lines of CrewAI, in the style of notebook 01; the new idea is `async_execution=True`. Ends with small changes to build your own |
+| `07_deep_research_crewai` · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jaskamalkainth/Multi-Agent-Patterns/blob/main/notebooks/07_deep_research_crewai_colab.ipynb) (`07_deep_research_crewai_colab`) | Lead → 3 researchers in parallel → writer | **Start here.** About 50 lines of CrewAI, in the style of notebook 01; the new idea is `async_execution=True`. Ends with small changes to build your own |
 | `06_build_your_own_deep_research` | Lead → parallel researchers → lead review → writer | The same idea in plain Python, with a review loop, a citation check, timeline charts, a live prompt editor and a quiz |
 
 Then three small CrewAI projects to try on your own after the session. Each runs top to bottom.
