@@ -111,6 +111,18 @@ pip install jupyterlab
 jupyter lab notebooks/          # each notebook installs its own framework in its first cell
 ```
 
+Then build your own research team. Claude's Research mode is a multi-agent system: a lead agent plans and
+sends subagents to search in parallel. Notebook 06 builds a small version in plain Python, one piece at a time,
+compares it with a single agent, and ends with **your own question**. Its first cell installs what it needs; you bring an LLM key:
+the researchers answer from the model's own knowledge, and adding a search tool (Wikipedia, no key) is an exercise.
+
+| Notebook | Agents | What you see |
+|---|---|---|
+| `06_build_your_own_deep_research` | Lead → parallel researchers → lead review → writer | Hierarchical, fan-out / fan-in, selective context and a critic loop, in one small team you edit |
+
+It's visual and hands-on: diagrams of how Deep Research works, timeline charts of the agents working in
+parallel, a live editor for the lead's prompt, a quiz, and key notes with sources at the end.
+
 Then three small CrewAI projects to try on your own after the session. Each runs top to bottom.
 
 | Notebook | Agents | What you learn |
@@ -126,9 +138,10 @@ pip install -r requirements-crewai.txt jupyterlab
 jupyter lab notebooks/
 ```
 
-In the **Choose your LLM** cell, set `PROVIDER` (`gemini`, `openai`, `anthropic`, `openrouter` or `ollama`) and
-paste its key. Gemini has a free key from [Google AI Studio](https://aistudio.google.com/api-keys); Ollama needs no
-key at all.
+In the **Choose your LLM** cell, set `PROVIDER` (`gemini`, `openai`, `anthropic`, `openrouter`, `groq` or `ollama`)
+and paste its key. Two providers have free keys: Gemini from [Google AI Studio](https://aistudio.google.com/api-keys)
+and Groq from [console.groq.com/keys](https://console.groq.com/keys) (it runs `openai/gpt-oss-20b`, and its free
+tier has per-minute limits, so the notebooks retry when it answers 429). Ollama needs no key at all.
 
 **More ideas to try in this repo:** add a ₹599 "Campus" shoe from an unverified seller to `data/shoes.json` and
 see which levels buy it, or give L1 a seller-check worker and compare its token cost to L2.
@@ -143,7 +156,7 @@ patterns/     LangGraph versions        crews/   CrewAI versions
 lab/          guardrails lab, Claude bridge, servers
 web/          the talk and demo pages
 data/         demo stores and a recorded live collection
-notebooks/    the demo as a notebook, and CrewAI practice notebooks
+notebooks/    the demo as a notebook, build-your-own deep research, CrewAI practice notebooks
 tests/
 docs/         README screenshots
 ```
