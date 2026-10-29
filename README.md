@@ -112,13 +112,14 @@ jupyter lab notebooks/          # each notebook installs its own framework in it
 ```
 
 Then build your own research team. Claude's Research mode is a multi-agent system: a lead agent plans and
-sends subagents to work in parallel. Two notebooks build a small version of it; the agents answer from the model's
-own knowledge, so all you need is an LLM key.
+sends subagents to work in parallel. Two notebooks build the same small version of it, one per framework, like
+04 and 05. The agents answer from the model's own knowledge, so all you need is an LLM key. Both run locally or
+in Google Colab.
 
 | Notebook | Agents | What you see |
 |---|---|---|
-| `07_deep_research_crewai` · [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jaskamalkainth/Multi-Agent-Patterns/blob/main/notebooks/07_deep_research_crewai_colab.ipynb) (`07_deep_research_crewai_colab`) | Lead → 3 researchers in parallel → writer | **Start here.** About 50 lines of CrewAI, in the style of notebook 01; the new idea is `async_execution=True`. Ends with small changes to build your own |
-| `06_build_your_own_deep_research` | Lead → parallel researchers → lead review → writer | The same idea in plain Python, with a review loop, a citation check, timeline charts, a live prompt editor and a quiz |
+| `07_deep_research_crewai` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jaskamalkainth/Multi-Agent-Patterns/blob/main/notebooks/07_deep_research_crewai.ipynb) | Lead → researchers in parallel → writer | **Start here.** About 50 lines of CrewAI, in the style of notebook 01; the new idea is `async_execution=True`. In Colab, setup is two short forms and the topic, team size and parallel switch are form fields |
+| `06_deep_research_langgraph` [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Jaskamalkainth/Multi-Agent-Patterns/blob/main/notebooks/06_deep_research_langgraph.ipynb) | Lead → researchers in parallel → review loop → writer | The same team in LangGraph: `Send` and a reducer for the parallel researchers, a conditional edge for the review loop. Adds a citation check, timeline charts, a live prompt editor and a quiz |
 
 Then three small CrewAI projects to try on your own after the session. Each runs top to bottom.
 
